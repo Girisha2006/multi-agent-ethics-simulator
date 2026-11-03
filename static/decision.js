@@ -19,6 +19,7 @@ let llmMessage = '';
 let llmRunning = false;
 let llmLastError = null;
 let llmLoaded = false;
+let llmRepeat = false;
 const detailCache = {};
 
 const api = async (path, method = 'GET', body) => {
@@ -76,11 +77,14 @@ const initTabs = () => {
 };
 
 /* ---- dilemmas ---- */
-const byId = (id) => catalog.dilemmas.find((d) => d.id === id);
+const byId = (id) => catalog?.dilemmas.find((d) => d.id === id);
 const baseOf = (id) => { const d = byId(id); return d?.base || id; };
-const hashId = () => decodeURIComponent((location.hash.match(/dilemma=([^&]+)/) || [])[1] || '');
+const hashId = () => {
+  try { return decodeURIComponent((location.hash.match(/dilemma=([^&]+)/) || [])[1] || ''); }
+  catch { return ''; }
+};
 const select = (id, push = true) => {
-  if (!byId(id)) id = catalog.dilemmas.find((d) => !d.base).id;
+  if (!byId(id)) { id = catalog.dilemmas.find((d) => !d.base).id; push = true; }
   selectedId = id;
   if (push && hashId() !== id) history.replaceState(null, '', `#dilemma=${encodeURIComponent(id)}`);
   renderList();
@@ -151,7 +155,7 @@ const renderEval = () => {
   const audit = `<div class="dl-table-wrap"><table class="dl-table"><thead><tr><th scope="col">Agent</th><th scope="col">Audits passed</th></tr></thead><tbody>${agents.map((a) => { const s = report.explanations.summary[a.id]; return `<tr><th scope="row">${escapeHtml(a.name)}</th><td>${s.passed} / ${s.audited}</td></tr>`; }).join('')}</tbody></table></div>`;
   const hs = report.human.summary;
   const human = `<ul class="dl-prefs">${report.human.preferences.map((p) => `<li><strong>${escapeHtml(featureLabel(p.feature))}</strong>: spare ${escapeHtml(p.spare)} over ${escapeHtml(p.over)} <span class="dl-badge">${escapeHtml(p.strength)}</span></li>`).join('')}</ul>
-    <div class="dl-table-wrap"><table class="dl-table"><caption class="sr-only">Agent outcomes against human preference directions</caption><thead><tr><th scope="col">Agent</th>${report.human.preferences.map((p) => `<th scope="col">${escapeHtml(featureLabel(p.feature))}</th>`).join('')}</tr></thead><tbody>${agents.map((a) => `<tr><th scope="row">${escapeHtml(a.name)}</th>${report.human.preferences.map((p) => `<td>${(hs[a.id]?.[p.feature] || []).map(outcomeHtml).join('<span class="dl-cell-sub"></span>')}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    <div class="dl-table-wrap"><table class="dl-table"><caption class="sr-only">Agent outcomes against human preference directions</caption><thead><tr><th scope="col">Agent</th>${report.human.preferences.map((p) => `<th scope="col">${escapeHtml(featureLabel(p.feature))}</th>`).join('')}</tr></thead><tbody>${agents.map((a) => `<tr><th scope="row">${escapeHtml(a.name)}</th>${report.human.preferences.map((p) => `<td>${(hs[a.id]?.[p.feature] || []).map(outcomeHtml).join('<br>')}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
   $('dl-eval').innerHTML = `<section class="dl-section"><h2>Consistency</h2><p class="dl-note">Each variant changes one feature. An agent is expected to react only to features in its rule; a violation is a changed decision (not a tie) for a feature it should ignore.</p>${consistency}</section>
     <section class="dl-section"><h2>Explanation audit</h2><p class="dl-note">Five mechanical checks per explanation across every dilemma.</p>${audit}</section>
     <section class="dl-section"><h2>Human comparison</h2><p class="dl-note">Source: ${escapeHtml(report.human.source)}. These are descriptive survey directions, not moral correctness. Each cell lists the outcome of every contrast for that feature.</p>${human}</section>
@@ -187,7 +191,7 @@ const statusHtml = () => {
     <div class="dl-meter ${q.remaining <= 0 ? 'full' : ''}" role="meter" aria-label="Daily quota used" aria-valuemin="0" aria-valuemax="${num(q.limit)}" aria-valuenow="${num(q.used)}"><span style="width:${pct}%"></span></div>`;
 };
 const resultHtml = (r) => {
-  const meta = `<div class="dl-result-meta"><span class="dl-badge teal">${escapeHtml(sourceLabel(r))}</span>${r.model_id ? `<span>${escapeHtml(r.model_id)}</span>` : ''}${r.duration_ms != null ? `<span>${num(r.duration_ms)} ms</span>` : ''}<span>${new Date(r.created_at).toLocaleString()}</span></div>`;
+  const meta = `<div class="dl-result-meta">${r.status === 'ok' ? `<span class="dl-badge teal">${escapeHtml(sourceLabel(r))}</span>` : ''}${r.model_id ? `<span>${escapeHtml(r.model_id)}</span>` : ''}${r.duration_ms != null ? `<span>${num(r.duration_ms)} ms</span>` : ''}<span>${new Date(r.created_at).toLocaleString()}</span></div>`;
   if (r.status !== 'ok') {
     const e = r.error || {};
     return `<div class="dl-card dl-result">${meta}<div class="dl-alert">${escapeHtml(e.message || 'The run failed.')}${e.retry_after != null ? ` Try again in ${num(e.retry_after)} s.` : ''}</div></div>`;
@@ -203,7 +207,7 @@ const renderLlm = () => {
   $('dl-llm').innerHTML = `<section class="dl-section"><h2>LLM service</h2>${statusHtml()}
     <p class="dl-note">Free OpenRouter models allow roughly 50 requests per day and 20 per minute. One run is one request for all four agents.</p></section>
     <section class="dl-section"><h2>Run on the selected dilemma</h2><p>${escapeHtml(d?.title || '')}${d?.base ? ` <span class="dl-badge teal">${escapeHtml(d.change)}</span>` : ''}</p>
-    <div class="dl-run"><button class="button dl-run-btn" id="dl-run" ${blocker ? 'disabled' : ''}>Run LLM agents on this dilemma</button><label><input type="checkbox" id="dl-repeat"> Repeat (uses quota)</label></div>
+    <div class="dl-run"><button class="button dl-run-btn" id="dl-run" ${blocker ? 'disabled' : ''}>Run LLM agents on this dilemma</button><label><input type="checkbox" id="dl-repeat" ${llmRepeat ? 'checked' : ''}> Repeat (uses quota)</label></div>
     <div class="dl-why" id="dl-why" aria-live="polite">${escapeHtml(blocker && !llmRunning ? blocker : llmRunning ? 'Running…' : '')}${llmMessage && llmStatus ? ` ${escapeHtml(llmMessage)}` : ''}</div></section>
     <section class="dl-section"><h2>Results</h2>${llmLastError && llmLastError.dilemma_id === selectedId ? resultHtml(llmLastError) : ''}${llmResults === null ? '<p class="muted">No results loaded.</p>' : llmResults.length ? llmResults.map(resultHtml).join('') : '<p class="muted">No LLM results yet for this dilemma.</p>'}</section>`;
 };
@@ -227,7 +231,7 @@ const loadLlm = async () => {
 };
 const runLlm = async () => {
   if (runBlocker()) return;
-  const repeat = $('dl-repeat').checked;
+  const repeat = llmRepeat = $('dl-repeat').checked;
   llmRunning = true; llmMessage = '';
   renderLlm();
   try {
@@ -237,6 +241,7 @@ const runLlm = async () => {
   llmRunning = false;
   try { llmStatus = await api('/api/decision/llm/status'); } catch { llmStatus = null; llmMessage = UNAVAILABLE; }
   await refreshResults();
+  $('dl-run')?.focus();
 };
 
 /* ---- boot ---- */
@@ -246,6 +251,9 @@ const init = async () => {
     const item = event.target.closest('[data-id]');
     if (item) select(item.dataset.id);
     else if (event.target.closest('#dl-run')) runLlm();
+  });
+  document.addEventListener('change', (event) => {
+    if (event.target.id === 'dl-repeat') llmRepeat = event.target.checked;
   });
   window.addEventListener('hashchange', () => { const id = hashId(); if (catalog && id && id !== selectedId) select(id, false); });
   try { catalog = await api('/api/decision/catalog'); }

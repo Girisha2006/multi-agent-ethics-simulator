@@ -1,3 +1,7 @@
+import shutil
+import subprocess
+from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -25,3 +29,15 @@ def test_decision_assets_are_served(client):
 
 def test_index_links_to_decision_lab(client):
     assert 'href="/decision"' in client.get("/").text
+
+
+def test_decision_page_has_three_tabs(client):
+    html = client.get("/decision").text
+    for tab in ("dilemmas", "evaluation", "llm"):
+        assert f'id="tab-{tab}"' in html and f'id="panel-{tab}"' in html
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node not installed")
+def test_decision_script_parses():
+    script = Path(__file__).resolve().parent.parent / "static" / "decision.js"
+    subprocess.run(["node", "--check", str(script)], check=True)
