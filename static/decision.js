@@ -90,7 +90,7 @@ const select = (id, push = true) => {
   renderList();
   renderVariation();
   loadDilemma();
-  if (llmLoaded) { llmResults = null; renderLlm(); refreshResults(); }
+  if (llmLoaded) { llmResults = null; renderLlm(); refreshStatus().then(refreshResults); }
 };
 const renderList = () => {
   const base = baseOf(selectedId);
@@ -214,6 +214,9 @@ const renderLlm = () => {
     <div class="dl-why" id="dl-why" aria-live="polite">${escapeHtml(blocker && !llmRunning ? blocker : llmRunning ? 'Running…' : '')}${llmMessage && llmStatus ? ` ${escapeHtml(llmMessage)}` : ''}</div></section>
     <section class="dl-section"><h2>Results</h2>${last ? resultHtml(last) : ''}${llmResults === null ? '<p class="muted">No results loaded.</p>' : rest.length ? rest.map(resultHtml).join('') : last ? '' : '<p class="muted">No LLM results yet for this dilemma.</p>'}</section>`;
 };
+const refreshStatus = async () => {
+  try { llmStatus = await api('/api/decision/llm/status'); } catch { llmStatus = null; llmMessage = UNAVAILABLE; }
+};
 const refreshResults = async () => {
   const id = selectedId;
   try {
@@ -242,7 +245,7 @@ const runLlm = async () => {
     llmLast = result.dilemma_id === selectedId ? result : null;
   } catch { llmMessage = UNAVAILABLE; }
   llmRunning = false; llmRepeat = false;
-  try { llmStatus = await api('/api/decision/llm/status'); } catch { llmStatus = null; llmMessage = UNAVAILABLE; }
+  await refreshStatus();
   await refreshResults();
   $('dl-run')?.focus();
 };
