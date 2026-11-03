@@ -1,0 +1,61 @@
+{
+ "dilemmas": [
+  "barrier",
+  "brakes",
+  "close-call",
+  "crossing",
+  "dogs",
+  "even",
+  "generations",
+  "signal"
+ ],
+ "models": [
+  "nvidia/nemotron-3.5-super-vl:free"
+ ],
+ "recorded": [
+  "2026-11-03"
+ ],
+ "recordings": 8,
+ "summary": {
+  "expected_utility": {
+   "answers": 8,
+   "audit_passed": 1,
+   "cites_influential_factors": 2,
+   "cites_no_ignored_factor": 7,
+   "decision_matches_rule": 7,
+   "matches_reference": 7,
+   "names_its_choice": 7,
+   "numbers_traceable": 8
+  },
+  "prospect_theory": {
+   "answers": 8,
+   "audit_passed": 0,
+   "cites_influential_factors": 0,
+   "cites_no_ignored_factor": 6,
+   "decision_matches_rule": 6,
+   "matches_reference": 6,
+   "names_its_choice": 6,
+   "numbers_traceable": 3
+  },
+  "satisficing": {
+   "answers": 8,
+   "audit_passed": 0,
+   "cites_influential_factors": 1,
+   "cites_no_ignored_factor": 8,
+   "decision_matches_rule": 4,
+   "matches_reference": 4,
+   "names_its_choice": 6,
+   "numbers_traceable": 8
+  },
+  "sen_welfare": {
+   "answers": 8,
+   "audit_passed": 1,
+   "cites_influential_factors": 1,
+   "cites_no_ignored_factor": 8,
+   "decision_matches_rule": 7,
+   "matches_reference": 7,
+   "names_its_choice": 7,
+   "numbers_traceable": 7
+  }
+ }
+}

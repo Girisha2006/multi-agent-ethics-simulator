@@ -61,6 +61,19 @@ Base dilemmas with disagreement:
 - **Against the signal** (`signal`): Expected utility spares 3 adults (crossing on red); Welfare and empathy spares 3 adults (crossing on red); Bounded rationality spares 2 adults (crossing on green); Prospect theory spares 2 adults (crossing on green)
 - **Uncertain brakes** (`brakes`): Expected utility spares 4 adults (crossing on green); Welfare and empathy spares 4 adults (crossing on green); Bounded rationality spares 4 adults (crossing on green); Prospect theory spares 5 adults (crossing on green), fatal with 60% probability
 
+## 5. LLM agents (recorded runs)
+
+8 real batched runs (`nvidia/nemotron-3.5-super-vl:free`, recorded 2026-11-03), one request per dilemma for all four agents. Answers are re-checked against today's rules and audit; their text is never changed.
+
+| Agent | matches rule | audit passed | names choice | cites influential | no ignored factor | numbers traceable |
+|---|---|---|---|---|---|---|
+| Expected utility | 7/8 | 1/8 | 7/8 | 2/8 | 7/8 | 8/8 |
+| Welfare and empathy | 7/8 | 1/8 | 7/8 | 1/8 | 8/8 | 7/8 |
+| Bounded rationality | 4/8 | 0/8 | 6/8 | 1/8 | 8/8 | 8/8 |
+| Prospect theory | 6/8 | 0/8 | 6/8 | 0/8 | 6/8 | 3/8 |
+
+A small sample of a single free model: this describes these recordings, not language models in general.
+
 ## Limits
 
 Small authored scenario set; rules and parameters are stated modelling choices (see the report and docs/decision-lab.md); the Sen agent is Sen-inspired, not a canonical algorithm; human data is used for direction only.

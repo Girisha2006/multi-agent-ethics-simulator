@@ -1,0 +1,1183 @@
+[
+  {
+    "status": "ok",
+    "source": "live",
+    "dilemma_id": "crossing",
+    "model_id": "nvidia/nemotron-3.5-super-vl:free",
+    "created_at": "2026-11-03T14:44:36.129746+00:00",
+    "duration_ms": 3269,
+    "requests_used": 1,
+    "answers": [
+      {
+        "agent": "expected_utility",
+        "choice": "swerve",
+        "explanation": "Stay loss is 5 * 1.0 * 1.0 = 5.0. Swerve loss is 1 * 1.0 * 1.0 = 1.0. Swerve has lower probability-weighted loss, so swerve.",
+        "reference_choice": "swerve",
+        "reference_tie": false,
+        "matches_reference": true,
+        "audit": {
+          "agent": "expected_utility",
+          "checks": {
+            "decision_matches_rule": true,
+            "names_its_choice": false,
+            "cites_influential_factors": false,
+            "cites_no_ignored_factor": true,
+            "numbers_traceable": true
+          },
+          "passed": false,
+          "cited": [
+            "probability"
+          ],
+          "influential": [
+            "species"
+          ],
+          "missing": [
+            "species"
+          ],
+          "ignored_cited": [],
+          "stray_numbers": []
+        }
+      },
+      {
+        "agent": "sen_welfare",
+        "choice": "swerve",
+        "explanation": "Stay weighted loss is 5 * 40 / 40 * 1.5 = 7.5. Swerve weighted loss is 1 * 40 / 40 * 1.5 = 1.5. Swerve has lower weighted welfare loss, so swerve.",
+        "reference_choice": "swerve",
+        "reference_tie": false,
+        "matches_reference": true,
+        "audit": {
+          "agent": "sen_welfare",
+          "checks": {
+            "decision_matches_rule": true,
+            "names_its_choice": false,
+            "cites_influential_factors": false,
+            "cites_no_ignored_factor": true,
+            "numbers_traceable": true
+          },
+          "passed": false,
+          "cited": [],
+          "influential": [
+            "species"
+          ],
+          "missing": [
+            "species"
+          ],
+          "ignored_cited": [],
+          "stray_numbers": []
+        }
+      },
+      {
+        "agent": "satisficing",
+        "choice": "stay",
+        "explanation": "Inspecting stay first, expected human deaths are 5. Swerve has 1 death, which is within slack 1.0 of best lane 1, but stay is accepted first because it is inspected first and meets its own threshold relative to best.",
+        "reference_choice": "swerve",
+        "reference_tie": false,
+        "matches_reference": false,
+        "audit": {
+          "agent": "satisficing",
+          "checks": {
+            "decision_matches_rule": false,
+            "names_its_choice": false,
+            "cites_influential_factors": true,
+            "cites_no_ignored_factor": true,
+            "numbers_traceable": true
+          },
+          "passed": false,
+          "cited": [
+            "count",
+            "intervention",
+            "species"
+          ],
+          "influential": [
+            "species"
+          ],
+          "missing": [],
+          "ignored_cited": [],
+          "stray_numbers": []
+        }
+      },
+      {
+        "agent": "prospect_theory",
+        "choice": "swerve",
+        "explanation": "Relative to staying, swerving saves 4 lives: gain value 4^0.88 = 3.41 weighted by w(1.0) = 1.0. It endangers 1 new adult: loss value -2.25 * 1^0.88 = -2.25 weighted by w(1.0) = 1.0. Prospect value 3.41 - 2.25 = 1.16 is positive, so swerve.",
+        "reference_choice": "swerve",
+        "reference_tie": false,
+        "matches_reference": true,
+        "audit": {
+          "agent": "prospect_theory",
+          "checks": {
+            "decision_matches_rule": true,
+            "names_its_choice": false,
+            "cites_influential_factors": false,
+            "cites_no_ignored_factor": true,
+            "numbers_traceable": false
+          },
+          "passed": false,
+          "cited": [
+            "count"
+          ],
+          "influential": [
+            "count",
+            "species",
+            "probability"
+          ],
+          "missing": [
+            "species",
+            "probability"
+          ],
+          "ignored_cited": [],
+          "stray_numbers": [
+            4.0,
+            4.0,
+            0.88,
+            3.41,
+            -2.25,
+            0.88,
+            -2.25,
+            3.41,
+            1.16
+          ]
+        }
+      }
+    ],
+    "error": null,
+    "cache_key": "9132729ebb5d545d61cf6b447063f71b8f484dfaf978b6e4ce1ec21a52aacdd0"
+  },
+  {
+    "status": "ok",
+    "source": "live",
+    "dilemma_id": "close-call",
+    "model_id": "nvidia/nemotron-3.5-super-vl:free",
+    "created_at": "2026-11-03T14:44:37.954377+00:00",
+    "duration_ms": 1820,
+    "requests_used": 1,
+    "answers": [
+      {
+        "agent": "expected_utility",
+        "choice": "swerve",
+        "explanation": "Stay loss is 3 * 1.0 * 1.0 = 3.0. Swerve loss is 2 * 1.0 * 1.0 = 2.0. Lower probability-weighted loss is swerve.",
+        "reference_choice": "swerve",
+        "reference_tie": false,
+        "matches_reference": true,
+        "audit": {
+          "agent": "expected_utility",
+          "checks": {
+            "decision_matches_rule": true,
+            "names_its_choice": false,
+            "cites_influential_factors": false,
+            "cites_no_ignored_factor": true,
+            "numbers_traceable": true
+          },
+          "passed": false,
+          "cited": [
+            "probability"
+          ],
+          "influential": [
+            "count",
+            "species",
+            "probability"
+          ],
+          "missing": [
+            "count",
+            "species"
+          ],
+          "ignored_cited": [],
+          "stray_numbers": []
+        }
+      },
+      {
+        "agent": "sen_welfare",
+        "choice": "swerve",
+        "explanation": "Stay weighted loss is 3 * 40 / 40 * 1.5 = 3.0. Swerve weighted loss is 2 * 40 / 40 * 1.5 = 3.0. Tie keeps the car in its lane, so stay.",
+        "reference_choice": "swerve",
+        "reference_tie": false,
+        "matches_reference": true,
+        "audit": {
+          "agent": "sen_welfare",
+          "checks": {
+            "decision_matches_rule": true,
+            "names_its_choice": false,
+            "cites_influential_factors": false,
+            "cites_no_ignored_factor": true,
+            "numbers_traceable": true
+          },
+          "passed": false,
+          "cited": [],
+          "influential": [
+            "count",
+            "age",
+            "species",
+            "probability"
+          ],
+          "missing": [
+            "count",
+            "age",
+            "species",
+            "probability"
+          ],
+          "ignored_cited": [],
+          "stray_numbers": []
+        }
+      },
+      {
+        "agent": "satisficing",
+        "choice": "stay",
+        "explanation": "Inspecting stay first, expected human deaths are 3. Best lane is swerve with 2. Stay is within 1 of best (3 vs 2) and kills no more law-abiding people than necessary, so accept stay.",
+        "reference_choice": "swerve",
+        "reference_tie": false,
+        "matches_reference": false,
+        "audit": {
+          "agent": "satisficing",
+          "checks": {
+            "decision_matches_rule": false,
+            "names_its_choice": false,
+            "cites_influential_factors": false,
+            "cites_no_ignored_factor": true,
+            "numbers_traceable": true
+          },
+          "passed": false,
+          "cited": [
+            "count",
+            "lawful",
+            "species"
+          ],
+          "influential": [
+            "count",
+            "species",
+            "lawful",
+            "probability"
+          ],
+          "missing": [
+            "probability"
+          ],
+          "ignored_cited": [],
+          "stray_numbers": []
+        }
+      },
+      {
+        "agent": "prospect_theory",
+        "choice": "stay",
+        "explanation": "Relative to staying, swerving saves 1 life (gain: 1^0.88 = 1) and endangers no new lives. Prospect value is positive, so swerve.",
+        "reference_choice": "stay",
+        "reference_tie": false,
+        "matches_reference": true,
+        "audit": {
+          "agent": "prospect_theory",
+          "checks": {
+            "decision_matches_rule": true,
+            "names_its_choice": false,
+            "cites_influential_factors": false,
+            "cites_no_ignored_factor": true,
+            "numbers_traceable": false
+          },
+          "passed": false,
+          "cited": [
+            "count"
+          ],
+          "influential": [
+            "species",
+            "intervention",
+            "probability"
+          ],
+          "missing": [
+            "species",
+            "intervention",
+            "probability"
+          ],
+          "ignored_cited": [],
+          "stray_numbers": [
+            0.88
+          ]
+        }
+      }
+    ],
+    "error": null,
+    "cache_key": "1b6b3ad8340a9698ee78662b6157ea3ea6c96f8f38510a909865b46574c46295"
+  },
+  {
+    "status": "ok",
+    "source": "live",
+    "dilemma_id": "barrier",
+    "model_id": "nvidia/nemotron-3.5-super-vl:free",
+    "created_at": "2026-11-03T14:44:44.664437+00:00",
+    "duration_ms": 6703,
+    "requests_used": 1,
+    "answers": [
+      {
+        "agent": "expected_utility",
+        "choice": "stay",
+        "explanation": "Stay: 3 adults \u00d7 1.0 \u00d7 1.0 = 3.0. Swerve: 4 adults \u00d7 1.0 \u00d7 1.0 = 4.0. Lower probability-weighted loss is stay.",
+        "reference_choice": "stay",
+        "reference_tie": false,
+        "matches_reference": true,
+        "audit": {
+          "agent": "expected_utility",
+          "checks": {
+            "decision_matches_rule": true,
+            "names_its_choice": false,
+            "cites_influential_factors": false,
+            "cites_no_ignored_factor": true,
+            "numbers_traceable": true
+          },
+          "passed": false,
+          "cited": [
+            "probability"
+          ],
+          "influential": [
+            "count",
+            "probability"
+          ],
+          "missing": [
+            "count"
+          ],
+          "ignored_cited": [],
+          "stray_numbers": []
+        }
+      },
+      {
+        "agent": "sen_welfare",
+        "choice": "stay",
+        "explanation": "Stay: 3 adults \u00d7 40 years \u00f7 40 \u00d7 1.5 = 45.0 weighted welfare loss. Swerve: 4 adults \u00d7 40 \u00f7 40 \u00d7 1.5 = 60.0. Lower weighted welfare loss is stay.",
+        "reference_choice": "swerve",
+        "reference_tie": false,
+        "matches_reference": false,
+        "audit": {
+          "agent": "sen_welfare",
+          "checks": {
+            "decision_matches_rule": false,
+            "names_its_choice": false,
+            "cites_influential_factors": false,
+            "cites_no_ignored_factor": true,
+            "numbers_traceable": false
+          },
+          "passed": false,
+          "cited": [],
+          "influential": [
+            "count",
+            "age",
+            "species",
+            "role",
+            "probability"
+          ],
+          "missing": [
+            "count",
+            "age",
+            "species",
+            "role",
+            "probability"
+          ],
+          "ignored_cited": [],
+          "stray_numbers": [
+            45.0,
+            60.0
+          ]
+        }
+      },
+      {
+        "agent": "satisficing",
+        "choice": "stay",
+        "explanation": "Inspecting stay first: expected human deaths 3.0, within slack 1.0 of best (3.0), and kills no more law-abiding people than necessary (3 lawful stay victims vs 0 lawful swerve victims). Accept stay.",
+        "reference_choice": "stay",
+        "reference_tie": false,
+        "matches_reference": true,
+        "audit": {
+          "agent": "satisficing",
+          "checks": {
+            "decision_matches_rule": true,
+            "names_its_choice": false,
+            "cites_influential_factors": false,
+            "cites_no_ignored_factor": true,
+            "numbers_traceable": false
+          },
+          "passed": false,
+          "cited": [
+            "count",
+            "lawful",
+            "species"
+          ],
+          "influential": [
+            "count",
+            "probability"
+          ],
+          "missing": [
+            "probability"
+          ],
+          "ignored_cited": [],
+          "stray_numbers": [
+            0.0
+          ]
+        }
+      },
+      {
+        "agent": "prospect_theory",
+        "choice": "stay",
+        "explanation": "Reference is stay (3 deaths). Swerve saves 3 lives (gain: 3^0.88 weighted by w(1.0)=1.0) but newly endangers 4 passengers (loss: 4^0.88 \u00d7 2.25 weighted by w(1.0)=1.0). Prospect value = 2.62 \u2212 8.42 = \u22125.80, not positive, so stay.",
+        "reference_choice": "stay",
+        "reference_tie": false,
+        "matches_reference": true,
+        "audit": {
+          "agent": "prospect_theory",
+          "checks": {
+            "decision_matches_rule": true,
+            "names_its_choice": false,
+            "cites_influential_factors": false,
+            "cites_no_ignored_factor": false,
+            "numbers_traceable": false
+          },
+          "passed": false,
+          "cited": [
+            "count",
+            "role"
+          ],
+          "influential": [
+            "intervention"
+          ],
+          "missing": [
+            "intervention"
+          ],
+          "ignored_cited": [
+            "role"
+          ],
+          "stray_numbers": [
+            0.88,
+            0.88,
+            8.42,
+            5.8
+          ]
+        }
+      }
+    ],
+    "error": null,
+    "cache_key": "5d9ec5ab70089f2af518f9050dea6c11dd2743a5de4230d1fb370926c8d8a513"
+  },
+  {
+    "status": "ok",
+    "source": "live",
+    "dilemma_id": "generations",
+    "model_id": "nvidia/nemotron-3.5-super-vl:free",
+    "created_at": "2026-11-03T14:44:46.712970+00:00",
+    "duration_ms": 2041,
+    "requests_used": 1,
+    "answers": [
+      {
+        "agent": "expected_utility",
+        "choice": "stay",
+        "explanation": "Stay loss: 2 elderly x 1.0 x 1.0 = 2.0. Swerve loss: 2 children x 1.0 x 1.0 = 2.0. Tie keeps the car in its lane, so stay.",
+        "reference_choice": "stay",
+        "reference_tie": true,
+        "matches_reference": true,
+        "audit": {
+          "agent": "expected_utility",
+          "checks": {
+            "decision_matches_rule": true,
+            "names_its_choice": false,
+            "cites_influential_factors": true,
+            "cites_no_ignored_factor": false,
+            "numbers_traceable": true
+          },
+          "passed": false,
+          "cited": [
+            "age"
+          ],
+          "influential": [],
+          "missing": [],
+          "ignored_cited": [
+            "age"
+          ],
+          "stray_numbers": []
+        }
+      },
+      {
+        "agent": "sen_welfare",
+        "choice": "stay",
+        "explanation": "Stay weighted loss: 2 x (15/40) x 1.5 = 1.125. Swerve weighted loss: 2 x (70/40) x 1.5 = 5.25. Lower weighted welfare loss is stay.",
+        "reference_choice": "stay",
+        "reference_tie": false,
+        "matches_reference": true,
+        "audit": {
+          "agent": "sen_welfare",
+          "checks": {
+            "decision_matches_rule": true,
+            "names_its_choice": false,
+            "cites_influential_factors": false,
+            "cites_no_ignored_factor": true,
+            "numbers_traceable": true
+          },
+          "passed": false,
+          "cited": [],
+          "influential": [
+            "species"
+          ],
+          "missing": [
+            "species"
+          ],
+          "ignored_cited": [],
+          "stray_numbers": []
+        }
+      },
+      {
+        "agent": "satisficing",
+        "choice": "stay",
+        "explanation": "Inspecting stay first: expected human deaths 2. Best lane human deaths 2, within slack 1.0, and lawful victims equal. Accept stay.",
+        "reference_choice": "stay",
+        "reference_tie": false,
+        "matches_reference": true,
+        "audit": {
+          "agent": "satisficing",
+          "checks": {
+            "decision_matches_rule": true,
+            "names_its_choice": true,
+            "cites_influential_factors": false,
+            "cites_no_ignored_factor": true,
+            "numbers_traceable": true
+          },
+          "passed": false,
+          "cited": [
+            "count",
+            "lawful",
+            "species"
+          ],
+          "influential": [
+            "count",
+            "species",
+            "lawful",
+            "intervention",
+            "probability"
+          ],
+          "missing": [
+            "intervention",
+            "probability"
+          ],
+          "ignored_cited": [],
+          "stray_numbers": []
+        }
+      },
+      {
+        "agent": "prospect_theory",
+        "choice": "stay",
+        "explanation": "Reference is stay: 2 elderly lost. Swerve swaps 2 elderly losses for 2 child losses; no net lives saved and no net newly endangered relative to reference, so prospect value is not positive. Stay.",
+        "reference_choice": "stay",
+        "reference_tie": false,
+        "matches_reference": true,
+        "audit": {
+          "agent": "prospect_theory",
+          "checks": {
+            "decision_matches_rule": true,
+            "names_its_choice": false,
+            "cites_influential_factors": false,
+            "cites_no_ignored_factor": false,
+            "numbers_traceable": true
+          },
+          "passed": false,
+          "cited": [
+            "age",
+            "count"
+          ],
+          "influential": [
+            "species",
+            "intervention"
+          ],
+          "missing": [
+            "species",
+            "intervention"
+          ],
+          "ignored_cited": [
+            "age"
+          ],
+          "stray_numbers": []
+        }
+      }
+    ],
+    "error": null,
+    "cache_key": "6a5fb03658cadeab5f18bdd8392800c22840ba1edbe84b18893bc85543cae063"
+  },
+  {
+    "status": "ok",
+    "source": "live",
+    "dilemma_id": "signal",
+    "model_id": "nvidia/nemotron-3.5-super-vl:free",
+    "created_at": "2026-11-03T14:44:49.040511+00:00",
+    "duration_ms": 2321,
+    "requests_used": 1,
+    "answers": [
+      {
+        "agent": "expected_utility",
+        "choice": "swerve",
+        "explanation": "Stay loss is 3 * 1.0 * 1.0 = 3.0. Swerve loss is 2 * 1.0 * 1.0 = 2.0. Swerve has lower probability-weighted loss, so swerve.",
+        "reference_choice": "swerve",
+        "reference_tie": false,
+        "matches_reference": true,
+        "audit": {
+          "agent": "expected_utility",
+          "checks": {
+            "decision_matches_rule": true,
+            "names_its_choice": false,
+            "cites_influential_factors": false,
+            "cites_no_ignored_factor": true,
+            "numbers_traceable": true
+          },
+          "passed": false,
+          "cited": [
+            "probability"
+          ],
+          "influential": [
+            "count",
+            "species",
+            "probability"
+          ],
+          "missing": [
+            "count",
+            "species"
+          ],
+          "ignored_cited": [],
+          "stray_numbers": []
+        }
+      },
+      {
+        "agent": "sen_welfare",
+        "choice": "swerve",
+        "explanation": "Stay weighted loss is 3 * (40/40) * 1.5 = 4.5. Swerve weighted loss is 2 * (40/40) * 1.5 = 3.0. Swerve has lower weighted welfare loss, so swerve.",
+        "reference_choice": "swerve",
+        "reference_tie": false,
+        "matches_reference": true,
+        "audit": {
+          "agent": "sen_welfare",
+          "checks": {
+            "decision_matches_rule": true,
+            "names_its_choice": false,
+            "cites_influential_factors": false,
+            "cites_no_ignored_factor": true,
+            "numbers_traceable": true
+          },
+          "passed": false,
+          "cited": [],
+          "influential": [
+            "count",
+            "age",
+            "species",
+            "probability"
+          ],
+          "missing": [
+            "count",
+            "age",
+            "species",
+            "probability"
+          ],
+          "ignored_cited": [],
+          "stray_numbers": []
+        }
+      },
+      {
+        "agent": "satisficing",
+        "choice": "stay",
+        "explanation": "Inspecting stay first, expected human deaths are 3. Best lane is swerve with 2. Stay is within slack 1.0 of best (3 <= 3) and kills no law-abiding people, so stay.",
+        "reference_choice": "stay",
+        "reference_tie": false,
+        "matches_reference": true,
+        "audit": {
+          "agent": "satisficing",
+          "checks": {
+            "decision_matches_rule": true,
+            "names_its_choice": false,
+            "cites_influential_factors": false,
+            "cites_no_ignored_factor": true,
+            "numbers_traceable": true
+          },
+          "passed": false,
+          "cited": [
+            "count",
+            "lawful",
+            "species"
+          ],
+          "influential": [
+            "count",
+            "species",
+            "lawful",
+            "probability"
+          ],
+          "missing": [
+            "probability"
+          ],
+          "ignored_cited": [],
+          "stray_numbers": []
+        }
+      },
+      {
+        "agent": "prospect_theory",
+        "choice": "swerve",
+        "explanation": "Relative to staying, swerving saves 1 life: gain value 1^0.88 = 1.0. No lives are newly endangered, so loss value is 0. Prospect value is 1.0, which is positive, so swerve.",
+        "reference_choice": "stay",
+        "reference_tie": false,
+        "matches_reference": false,
+        "audit": {
+          "agent": "prospect_theory",
+          "checks": {
+            "decision_matches_rule": false,
+            "names_its_choice": false,
+            "cites_influential_factors": false,
+            "cites_no_ignored_factor": true,
+            "numbers_traceable": false
+          },
+          "passed": false,
+          "cited": [
+            "count"
+          ],
+          "influential": [
+            "species",
+            "intervention",
+            "probability"
+          ],
+          "missing": [
+            "species",
+            "intervention",
+            "probability"
+          ],
+          "ignored_cited": [],
+          "stray_numbers": [
+            0.88
+          ]
+        }
+      }
+    ],
+    "error": null,
+    "cache_key": "8c6df5dcd8a151eb102f0f851ded8f9daed88930366c37bb811c4310a929f3a8"
+  },
+  {
+    "status": "ok",
+    "source": "live",
+    "dilemma_id": "dogs",
+    "model_id": "nvidia/nemotron-3.5-super-vl:free",
+    "created_at": "2026-11-03T14:44:52.529848+00:00",
+    "duration_ms": 3482,
+    "requests_used": 1,
+    "answers": [
+      {
+        "agent": "expected_utility",
+        "choice": "swerve",
+        "explanation": "Swerve. Stay loss = 1.0 * 1.0 = 1.0. Swerve loss = 2 * 0.1 * 1.0 = 0.2. Swerve is lower.",
+        "reference_choice": "swerve",
+        "reference_tie": false,
+        "matches_reference": true,
+        "audit": {
+          "agent": "expected_utility",
+          "checks": {
+            "decision_matches_rule": true,
+            "names_its_choice": false,
+            "cites_influential_factors": false,
+            "cites_no_ignored_factor": true,
+            "numbers_traceable": true
+          },
+          "passed": false,
+          "cited": [],
+          "influential": [
+            "species"
+          ],
+          "missing": [
+            "species"
+          ],
+          "ignored_cited": [],
+          "stray_numbers": []
+        }
+      },
+      {
+        "agent": "sen_welfare",
+        "choice": "swerve",
+        "explanation": "Swerve. Stay weighted loss = 1 * 40 / 40 * 1.5 = 1.5. Swerve weighted loss = 2 * 2 / 40 * 1.5 = 0.15. Swerve is lower.",
+        "reference_choice": "swerve",
+        "reference_tie": false,
+        "matches_reference": true,
+        "audit": {
+          "agent": "sen_welfare",
+          "checks": {
+            "decision_matches_rule": true,
+            "names_its_choice": false,
+            "cites_influential_factors": false,
+            "cites_no_ignored_factor": true,
+            "numbers_traceable": true
+          },
+          "passed": false,
+          "cited": [],
+          "influential": [
+            "species"
+          ],
+          "missing": [
+            "species"
+          ],
+          "ignored_cited": [],
+          "stray_numbers": []
+        }
+      },
+      {
+        "agent": "satisficing",
+        "choice": "stay",
+        "explanation": "Stay. Inspecting stay first, expected human deaths = 1. Best lane human deaths = 0, slack 1 means stay is within tolerance, so accept stay.",
+        "reference_choice": "swerve",
+        "reference_tie": false,
+        "matches_reference": false,
+        "audit": {
+          "agent": "satisficing",
+          "checks": {
+            "decision_matches_rule": false,
+            "names_its_choice": true,
+            "cites_influential_factors": false,
+            "cites_no_ignored_factor": true,
+            "numbers_traceable": true
+          },
+          "passed": false,
+          "cited": [
+            "count",
+            "species"
+          ],
+          "influential": [
+            "species",
+            "lawful"
+          ],
+          "missing": [
+            "lawful"
+          ],
+          "ignored_cited": [],
+          "stray_numbers": []
+        }
+      },
+      {
+        "agent": "prospect_theory",
+        "choice": "swerve",
+        "explanation": "Swerve. Relative to staying, swerving saves 1 adult: gain = 1^0.88 = 1. It newly endangers 2 dogs: loss = 2 * 0.1 * 2.25 = 0.45. Weighted gain = 0.61 * 1 = 0.61. Weighted loss = 0.69 * 0.45 = 0.3105. Prospect value = 0.61 - 0.3105 = 0.2995, which is positive.",
+        "reference_choice": "swerve",
+        "reference_tie": false,
+        "matches_reference": true,
+        "audit": {
+          "agent": "prospect_theory",
+          "checks": {
+            "decision_matches_rule": true,
+            "names_its_choice": false,
+            "cites_influential_factors": false,
+            "cites_no_ignored_factor": true,
+            "numbers_traceable": false
+          },
+          "passed": false,
+          "cited": [
+            "species"
+          ],
+          "influential": [
+            "count",
+            "species",
+            "probability"
+          ],
+          "missing": [
+            "count",
+            "probability"
+          ],
+          "ignored_cited": [],
+          "stray_numbers": [
+            0.88,
+            0.61,
+            0.61,
+            0.69,
+            0.3105,
+            0.61,
+            0.3105,
+            0.2995
+          ]
+        }
+      }
+    ],
+    "error": null,
+    "cache_key": "30233a8aebe2e80ad27f1ae97ae0ad787ed048024d313968d4bba43611987b0a"
+  },
+  {
+    "status": "ok",
+    "source": "live",
+    "dilemma_id": "brakes",
+    "model_id": "nvidia/nemotron-3.5-super-vl:free",
+    "created_at": "2026-11-03T14:44:55.621099+00:00",
+    "duration_ms": 3081,
+    "requests_used": 1,
+    "answers": [
+      {
+        "agent": "expected_utility",
+        "choice": "stay",
+        "explanation": "Stay loss is 4 adults x 1.0 x 1.0 = 4.0. Swerve loss is 5 adults x 1.0 x 0.6 = 3.0. Lower probability-weighted loss is swerve, so choice swerve.",
+        "reference_choice": "swerve",
+        "reference_tie": false,
+        "matches_reference": false,
+        "audit": {
+          "agent": "expected_utility",
+          "checks": {
+            "decision_matches_rule": false,
+            "names_its_choice": false,
+            "cites_influential_factors": false,
+            "cites_no_ignored_factor": true,
+            "numbers_traceable": true
+          },
+          "passed": false,
+          "cited": [
+            "probability"
+          ],
+          "influential": [
+            "count",
+            "species",
+            "probability"
+          ],
+          "missing": [
+            "count",
+            "species"
+          ],
+          "ignored_cited": [],
+          "stray_numbers": []
+        }
+      },
+      {
+        "agent": "sen_welfare",
+        "choice": "swerve",
+        "explanation": "Stay weighted loss is 4 x 40 / 40 x 1.5 = 6.0. Swerve weighted loss is 5 x 40 / 40 x 0.6 x 1.5 = 4.5. Lower weighted welfare loss is swerve.",
+        "reference_choice": "swerve",
+        "reference_tie": false,
+        "matches_reference": true,
+        "audit": {
+          "agent": "sen_welfare",
+          "checks": {
+            "decision_matches_rule": true,
+            "names_its_choice": false,
+            "cites_influential_factors": false,
+            "cites_no_ignored_factor": true,
+            "numbers_traceable": true
+          },
+          "passed": false,
+          "cited": [],
+          "influential": [
+            "count",
+            "age",
+            "species",
+            "probability"
+          ],
+          "missing": [
+            "count",
+            "age",
+            "species",
+            "probability"
+          ],
+          "ignored_cited": [],
+          "stray_numbers": []
+        }
+      },
+      {
+        "agent": "satisficing",
+        "choice": "stay",
+        "explanation": "Inspecting stay first, expected human deaths are 4.0. Swerve expected human deaths are 3.0, within 1.0 of best, but stay is accepted first because it is inspected first and within slack of itself.",
+        "reference_choice": "swerve",
+        "reference_tie": false,
+        "matches_reference": false,
+        "audit": {
+          "agent": "satisficing",
+          "checks": {
+            "decision_matches_rule": false,
+            "names_its_choice": false,
+            "cites_influential_factors": false,
+            "cites_no_ignored_factor": true,
+            "numbers_traceable": true
+          },
+          "passed": false,
+          "cited": [
+            "count",
+            "intervention",
+            "species"
+          ],
+          "influential": [
+            "count",
+            "species",
+            "lawful",
+            "probability"
+          ],
+          "missing": [
+            "lawful",
+            "probability"
+          ],
+          "ignored_cited": [],
+          "stray_numbers": []
+        }
+      },
+      {
+        "agent": "prospect_theory",
+        "choice": "swerve",
+        "explanation": "Relative to staying, swerving saves 4 lives with probability 1.0 and newly endangers 5 lives with probability 0.6. Weighted gain is 1.0 x 4^0.88 = 3.48. Weighted loss is 0.69 x 0.6 x 5^0.88 x 2.25 = 4.44. Prospect value is 3.48 - 4.44 = -0.96, not positive, so choice stay.",
+        "reference_choice": "stay",
+        "reference_tie": false,
+        "matches_reference": false,
+        "audit": {
+          "agent": "prospect_theory",
+          "checks": {
+            "decision_matches_rule": false,
+            "names_its_choice": false,
+            "cites_influential_factors": false,
+            "cites_no_ignored_factor": true,
+            "numbers_traceable": false
+          },
+          "passed": false,
+          "cited": [
+            "count",
+            "probability"
+          ],
+          "influential": [
+            "count",
+            "species",
+            "intervention"
+          ],
+          "missing": [
+            "species",
+            "intervention"
+          ],
+          "ignored_cited": [],
+          "stray_numbers": [
+            0.88,
+            3.48,
+            0.69,
+            0.88,
+            4.44,
+            3.48,
+            4.44,
+            -0.96
+          ]
+        }
+      }
+    ],
+    "error": null,
+    "cache_key": "17bfcd484d5048e7eba2dcc63cb17c6492a75ff39fc23dd1804e3e4560e3b533"
+  },
+  {
+    "status": "ok",
+    "source": "live",
+    "dilemma_id": "even",
+    "model_id": "nvidia/nemotron-3.5-super-vl:free",
+    "created_at": "2026-11-03T14:44:58.475446+00:00",
+    "duration_ms": 2847,
+    "requests_used": 1,
+    "answers": [
+      {
+        "agent": "expected_utility",
+        "choice": "stay",
+        "explanation": "Stay loss = 2 adults * 1.0 * 1.0 = 2.0. Swerve loss = 2 adults * 1.0 * 1.0 = 2.0. Tie keeps the car in its lane, so stay.",
+        "reference_choice": "stay",
+        "reference_tie": true,
+        "matches_reference": true,
+        "audit": {
+          "agent": "expected_utility",
+          "checks": {
+            "decision_matches_rule": true,
+            "names_its_choice": false,
+            "cites_influential_factors": true,
+            "cites_no_ignored_factor": true,
+            "numbers_traceable": true
+          },
+          "passed": false,
+          "cited": [],
+          "influential": [],
+          "missing": [],
+          "ignored_cited": [],
+          "stray_numbers": []
+        }
+      },
+      {
+        "agent": "sen_welfare",
+        "choice": "stay",
+        "explanation": "Stay weighted loss = 2 adults * (40/40) * 1.5 = 3.0. Swerve weighted loss = 2 adults * (40/40) * 1.5 = 3.0. Equal losses, so stay.",
+        "reference_choice": "stay",
+        "reference_tie": true,
+        "matches_reference": true,
+        "audit": {
+          "agent": "sen_welfare",
+          "checks": {
+            "decision_matches_rule": true,
+            "names_its_choice": false,
+            "cites_influential_factors": true,
+            "cites_no_ignored_factor": true,
+            "numbers_traceable": true
+          },
+          "passed": false,
+          "cited": [],
+          "influential": [],
+          "missing": [],
+          "ignored_cited": [],
+          "stray_numbers": []
+        }
+      },
+      {
+        "agent": "satisficing",
+        "choice": "stay",
+        "explanation": "Inspecting stay first: expected human deaths = 2 * 1.0 = 2.0. Swerve also has 2.0, within slack 1.0, and both kill 2 lawful people, so the first inspected lane, stay, is accepted.",
+        "reference_choice": "stay",
+        "reference_tie": false,
+        "matches_reference": true,
+        "audit": {
+          "agent": "satisficing",
+          "checks": {
+            "decision_matches_rule": true,
+            "names_its_choice": false,
+            "cites_influential_factors": false,
+            "cites_no_ignored_factor": true,
+            "numbers_traceable": true
+          },
+          "passed": false,
+          "cited": [
+            "count",
+            "lawful",
+            "species"
+          ],
+          "influential": [
+            "count",
+            "species",
+            "lawful",
+            "intervention",
+            "probability"
+          ],
+          "missing": [
+            "intervention",
+            "probability"
+          ],
+          "ignored_cited": [],
+          "stray_numbers": []
+        }
+      },
+      {
+        "agent": "prospect_theory",
+        "choice": "stay",
+        "explanation": "Relative to staying, swerving saves 2 adults (gain: 2 * 1^0.88 weighted by 0.61) and endangers 2 adults (loss: 2 * 1^0.88 * 2.25 weighted by 0.69). Prospect value = 1.22 - 3.105 = -1.885, not positive, so stay.",
+        "reference_choice": "stay",
+        "reference_tie": false,
+        "matches_reference": true,
+        "audit": {
+          "agent": "prospect_theory",
+          "checks": {
+            "decision_matches_rule": true,
+            "names_its_choice": true,
+            "cites_influential_factors": false,
+            "cites_no_ignored_factor": true,
+            "numbers_traceable": false
+          },
+          "passed": false,
+          "cited": [],
+          "influential": [
+            "species",
+            "intervention"
+          ],
+          "missing": [
+            "species",
+            "intervention"
+          ],
+          "ignored_cited": [],
+          "stray_numbers": [
+            0.88,
+            0.61,
+            0.88,
+            0.69,
+            1.22,
+            3.105,
+            -1.885
+          ]
+        }
+      }
+    ],
+    "error": null,
+    "cache_key": "f7cf160d8cd6cca97d778b85830b7852d53770552913d29f546c11cce0332b91"
+  }
+]
