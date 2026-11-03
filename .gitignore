@@ -12,3 +12,6 @@ env.txt
 .venv/
 venv/
 .DS_Store
+.superpowers/
+AGENTS.md
+WORKFLOW.md
