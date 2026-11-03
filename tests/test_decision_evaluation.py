@@ -54,3 +54,16 @@ def test_human_alignment_uses_both_lane_positions():
     for summary in result["summary"].values():
         assert summary["species"] == ["aligned", "aligned"] and summary["count"] == ["aligned", "aligned"]
     assert "direction only" in result["source"]
+
+
+def test_evaluation_script_writes_results(tmp_path, monkeypatch):
+    import importlib.util
+    from pathlib import Path
+    spec = importlib.util.spec_from_file_location("run_evaluation", Path(__file__).parent.parent / "tools" / "run_evaluation.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    monkeypatch.setattr(module, "ROOT", tmp_path)
+    module.main()
+    text = (tmp_path / "results" / "decision_lab.md").read_text()
+    assert "## 1. Decision consistency" in text and "| Expected utility |" in text
+    assert (tmp_path / "results" / "decision_lab.json").stat().st_size > 1000
