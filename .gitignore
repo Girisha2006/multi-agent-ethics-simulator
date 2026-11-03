@@ -9,3 +9,6 @@ artifacts/
 .env.*
 !.env.example
 env.txt
+.venv/
+venv/
+.DS_Store
