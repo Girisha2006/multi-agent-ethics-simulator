@@ -41,3 +41,10 @@ def test_decision_page_has_three_tabs(client):
 def test_decision_script_parses():
     script = Path(__file__).resolve().parent.parent / "static" / "decision.js"
     subprocess.run(["node", "--check", str(script)], check=True)
+
+
+def test_llm_routes_are_mounted(client, monkeypatch):
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    response = client.get("/api/decision/llm/status")
+    assert response.status_code == 200 and "quota" in response.json()
+    assert client.get("/api/decision/llm/results", params={"dilemma_id": "nope"}).status_code == 404

@@ -11,13 +11,14 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
 from . import engine, store, comparisons, openrouter
-from .decision import api as decision_api
+from .decision import api as decision_api, llm_api as decision_llm_api
 from .scenarios import ACTIONS, FACTS, FRAMEWORKS, SCENARIOS, VERSION, fact_cards, fact_value, get_scenario, fact_ids, facts_for, spent_credits
 
 app = FastAPI(title="Before You Decide", version=VERSION)
 STATIC = Path(__file__).resolve().parent.parent / "static"
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 app.include_router(decision_api.router)
+app.include_router(decision_llm_api.router)
 
 
 class NewRun(BaseModel):
