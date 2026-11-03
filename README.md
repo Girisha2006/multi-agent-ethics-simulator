@@ -44,11 +44,13 @@ From [results/decision_lab.md](results/decision_lab.md):
 - All templated explanations pass the five-item audit.
 - The four agents agree on 58 of 99 dilemmas. Prospect theory shows an omission bias, satisficing is sensitive to lane
   order, and only the welfare agent follows the Moral Machine age and pedestrian preferences in both lane positions.
+- LLM pilot: a free model playing all four agents on the 8 base dilemmas matches the rules 24 of 32 times, but almost none
+  of its explanations pass the full audit (§5 of the results).
 
 ## Optional LLM agents
 
 Put `OPENROUTER_API_KEY=...` in a git-ignored `.env` file. One request covers all four agents on a dilemma. Requests are
-counted before sending and cached. Failing models cool down, and real recordings made with `tools/record_llm.py` replay when quota runs out.
+counted before sending and cached. Failing models cool down, and the 8 committed real recordings replay when there is no key or quota.
 See [docs/llm-agents.md](docs/llm-agents.md).
 
 ## Documentation

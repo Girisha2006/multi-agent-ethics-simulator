@@ -41,7 +41,9 @@ Team 13 — Humanity's First Exam (HFE) · Demo track · Agents & Game Theory
   *Uncertain brakes*.
 - Prospect theory shows an omission bias with no explicit rule (needs ≈2.5× lives saved). Satisficing is lane-order
   sensitive. Only the welfare agent follows the age and pedestrian preferences in both positions.
-- LLM agents: report only measured numbers from `tools/record_llm.py` runs, or say that none were run.
+- LLM pilot (1 free model, 8 base dilemmas, 8 requests): matches the rule 7/8 for expected utility and welfare, 4/8 for
+  satisficing, 6/8 for prospect theory; almost no explanation passes the full audit (missing influential factors,
+  untraceable prospect-theory arithmetic, text that argues for the other lane).
 
 ## 6. Project management
 
@@ -50,8 +52,8 @@ Team 13 — Humanity's First Exam (HFE) · Demo track · Agents & Game Theory
 
 ## Live demo (about 5 minutes)
 
-**TEAM, the day before:** run `tools/record_llm.py` with the key (8 requests) so the LLM tab has real recordings to
-replay. Without a key *and* without recordings, the LLM tab is offline and its Run button is disabled.
+The repository ships 8 real recordings of the base dilemmas, so the LLM tab works without a key or quota. With the key,
+a live run costs 1 request; clicking Run again on the same dilemma reuses the saved result for free.
 
 1. `./start.sh` → open <http://127.0.0.1:8000/decision>.
 2. **Dilemmas tab:** open *Pedestrians or passengers*. Show four choices and the welfare agent's ×1.5 pedestrian weight.

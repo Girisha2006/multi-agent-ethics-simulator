@@ -25,7 +25,11 @@ contains only the setting name.
 ## Decision Lab: four agents in one request
 
 Free OpenRouter models allow roughly **50 requests per day and 20 per minute**, and individual free endpoints often return
-429 or disappear. The Decision Lab is built around that limit (`ethics_lab/decision/llm.py`):
+429 or disappear. The Decision Lab is built around that limit (`ethics_lab/decision/llm.py`). Accounts that have bought credits get 1000 free
+requests per day (the project key reported this on 3 November 2026); the local cap stays at 45 unless
+`DECISION_LLM_DAILY_LIMIT` is raised.
+
+
 
 | Measure | How it works |
 |---|---|
@@ -33,17 +37,21 @@ Free OpenRouter models allow roughly **50 requests per day and 20 per minute**, 
 | Counted before sending | Every HTTP attempt is written to SQLite *before* the request goes out. The daily cap (45) and a sliding 60-second window (15) are read from that table, so they survive restarts. |
 | Cache | Successful results are cached by `sha256(prompt version, agent parameters, stay lane, swerve lane)`. Clicking *Run* again costs nothing unless **Repeat** is ticked; Repeat resets after each run. |
 | Fallback chain | Up to 3 models per run, recommended first, and only models the live catalog lists at zero price. Never a paid fallback. |
-| Cooldowns | A failing model is benched: 429 → `Retry-After` (capped at 3600 s) or 60 s; unavailable or not free → 600 s; other errors → 120 s. A 401/402/403 is account-wide: the chain stops and every model cools for 600 s. Stored in SQLite. |
+| Cooldowns | A failing model is benched: 429 → `Retry-After` (capped at 3600 s) or 60 s; unavailable or not free → 600 s; other errors → 120 s. A 401/402 is account-wide: the chain stops and every model cools for 600 s. A 403 only benches that model, because it usually means one provider refuses the request. Stored in SQLite. |
 | Replay | With no key, quota used up, or every model failing, the newest matching **real** recording is replayed and labelled `source: "recording"` with its original model and date. If live calls were tried first, the result carries `fallback` with the reason and `requests_used` shows what was spent. |
 | One at a time | A non-blocking lock allows a single live run; a second click gets a `busy` error instead of a second request. |
-| Strict output | Answers must be valid JSON with exactly the four agent ids, `stay`/`swerve`, and explanations of 1–80 words. Anything else is an `invalid_output` failure. No repairs. |
+| Model order | The recommended model first, then models that support a strict JSON schema, then JSON mode, then the rest. |
+| Strict output | The first JSON object in the reply is read (a code fence or a sentence around it is skipped). It must hold exactly the four agent ids, `stay`/`swerve`, and explanations of 1–150 words (the prompt asks for 80). Anything else, including unbalanced JSON, is an `invalid_output` failure. No repairs. |
 
 Each answer is checked against the deterministic agent (`matches_reference`; either lane counts on a reference tie) and
 put through the same five-item explanation audit as the reference explanations (`docs/decision-lab.md`, Evaluation §2).
+Saved and recorded results are re-checked with the current rules and audit whenever they are shown; their text is never
+changed. `make evaluate` summarises the committed recordings in `results/decision_lab.md` §5 and `results/decision_llm.json`.
 
 ### Recording real runs for the demo
 
-Recordings make the LLM tab useful offline and on days when the free quota is gone. They must come from real runs; never
+Recordings make the LLM tab useful offline and on days when the free quota is gone. The repository includes 8 real runs
+of the base dilemmas (Nemotron 3.5 Super VL, 3 November 2026). They must come from real runs; never
 write or edit them by hand.
 
 ```bash
@@ -81,21 +89,25 @@ are different dimensions. Each selected model receives its own request and canno
 
 ### Available model options
 
-Catalog checked on 27 September 2026. The server checks current zero pricing before a free call and sets provider maximum prompt/completion prices to zero. A provider may still reject, throttle, or withdraw an endpoint.
+Both labs use the same model list (`openrouter.MODELS`). Catalog and Decision Lab probes checked on 3 November 2026; free
+endpoints change often, and the server re-checks zero pricing before every call. Qwen3.8 27B and Nemotron 3 Super, used in
+September, have since left the free catalog.
 
-| Model | OpenRouter ID | Current role |
-|---|---|---|
-| Qwen3.8 27B | `qwen/qwen3.8-27b:free` | Free reasoning comparison; rate-limited during live checks |
-| Nemotron 3.5 Lightning | `nvidia/nemotron-3.5-lightning:free` | Free speed-oriented comparison; malformed output observed |
-| Gemma 4 26B A4B | `google/gemma-4-26b-a4b-it:free` | Free Google model, distinct from Gemini; rate-limited during live checks |
-| **Nemotron 3 Super** | `nvidia/nemotron-3-super-120b-a12b:free` | Default starting model; one successful live relay-case test |
-| Nemotron 3 Ultra | `nvidia/nemotron-3-ultra-550b-a55b:free` | Larger free reasoning comparison; provider error observed |
-| Inkling Small | `thinkingmachines/inkling-small:free` | Free endpoint restricted by its provider to agentic harnesses; access denied during live checks |
-| TypeSafe Jev 1.13 | `typesafe/jev-1.13` | Optional paid decision-only comparison |
+| Model | OpenRouter ID | JSON support | Decision Lab probe (3 Nov 2026) |
+|---|---|---|---|
+| **Nemotron 3.5 Super VL** | `nvidia/nemotron-3.5-super-vl:free` | strict schema | Default. Valid answers in 2–7 s; made the 8 committed recordings |
+| dots.3 note preview | `dots-studio/dots-3-note-preview:free` | strict schema | Valid JSON in 11 s; one choice contradicted its own calculation |
+| Gemma 4 31B | `google/gemma-4-31b-it:free` | JSON mode | Rate limited (429) by its provider |
+| Gemma 4 26B A4B | `google/gemma-4-26b-a4b-it:free` | JSON mode | Rate limited (429) by its provider |
+| Nemotron 3 Ultra | `nvidia/nemotron-3-ultra-550b-a55b:free` | none | About 35 s; JSON missing a closing brace (invalid) |
+| Nemotron 3.5 Lightning | `nvidia/nemotron-3.5-lightning:free` | none | Long self-correcting explanations over the word limit (invalid) |
+| TypeSafe Jev 1.13 | `typesafe/jev-1.13` | typed | Before You Decide only; paid, opt-in |
+
+Inkling Small was removed: its provider restricts the free endpoint to agentic harnesses and returned 403.
 
 **Gemini and OpenAI:** no zero-priced text endpoint from these families appeared in the live OpenRouter catalog. The UI reports this explicitly. It automatically discovers an eligible `:free` endpoint from these families if one appears later and verifies its pricing before calling it. A free consumer chat plan or another provider's free tier is not evidence of free OpenRouter API access.
 
-Sources: [live catalog](https://openrouter.ai/api/v1/models), [Qwen](https://openrouter.ai/qwen/qwen3.8-27b:free), [Nemotron Lightning](https://openrouter.ai/nvidia/nemotron-3.5-lightning:free), [Gemma](https://openrouter.ai/google/gemma-4-26b-a4b-it:free), [Jev](https://openrouter.ai/typesafe/jev-1.13).
+Sources: [live catalog](https://openrouter.ai/api/v1/models), [Nemotron Lightning](https://openrouter.ai/nvidia/nemotron-3.5-lightning:free), [Gemma](https://openrouter.ai/google/gemma-4-26b-a4b-it:free), [Jev](https://openrouter.ai/typesafe/jev-1.13).
 
 ### Jev is a separate kind of model
 
@@ -147,7 +159,7 @@ The UI hides prior-state outputs from the current results area and keeps them un
 
 ### Live validation record
 
-One successful relay-case call to **Nemotron 3 Super**, prompt version `ethical-evidence-3`, returned:
+One successful relay-case call (September 2026) to **Nemotron 3 Super**, since withdrawn from the free catalog, prompt version `ethical-evidence-3`, returned:
 
 - Decision: `conditional`.
 - Next question: `relay_a`.

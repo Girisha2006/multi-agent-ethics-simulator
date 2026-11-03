@@ -104,8 +104,22 @@ Expected utility is indifferent (tie) on age, role, lawfulness and intervention.
 three pedestrians), *Against the signal* (satisficing and prospect theory spare the lawful pair), and *Uncertain brakes*
 (prospect theory alone avoids the risky swerve).
 
-**LLM agents.** **TEAM:** run `tools/record_llm.py` with the OpenRouter key and report the per-agent agreement with the
-reference and the audit pass rates here. Until then no LLM result is claimed.
+**LLM agents (pilot).** One free model, Nemotron 3.5 Super VL, played all four agents on the 8 base dilemmas, one request
+per dilemma (8 requests, recorded 3 November 2026; `results/decision_lab.md` §5):
+
+| Agent | matches rule | audit passed | names choice | cites influential | no ignored factor | numbers traceable |
+|---|---|---|---|---|---|---|
+| Expected utility | 7/8 | 1/8 | 7/8 | 2/8 | 7/8 | 8/8 |
+| Welfare and empathy | 7/8 | 1/8 | 7/8 | 1/8 | 8/8 | 7/8 |
+| Bounded rationality | 4/8 | 0/8 | 6/8 | 1/8 | 8/8 | 8/8 |
+| Prospect theory | 6/8 | 0/8 | 6/8 | 0/8 | 6/8 | 3/8 |
+
+The model usually reproduces the simple loss-minimising rules but follows satisficing's inspection order only half the time,
+and its prospect-theory arithmetic is often untraceable (for example it counts the lives saved by swerving as the difference
+between lanes rather than the stay-lane total). Several explanations argue for one lane and then return the other, which
+the *names its choice* check catches. Its explanations rarely cite every factor that is counterfactually influential: they
+compare counts but do not say that the people are human, or that the outcomes are certain. With 8 dilemmas and one model
+these are pilot observations, not estimates for language models in general.
 
 ## 6. Discussion and limitations
 
@@ -114,7 +128,8 @@ reference and the audit pass rates here. Until then no LLM result is claimed.
 - Satisficing's lane-order sensitivity is the bounded-rationality trade-off made visible. It stops at "good enough".
 - The scenario set is small and authored. Parameters are modelling choices held fixed, not fitted. The Sen agent is
   Sen-inspired, not canonical. Human data is used for direction only and is descriptive, not normative.
-- The explanation audit uses a keyword lexicon. It can miss paraphrases and does not detect negation.
+- The explanation audit uses a keyword lexicon. It can miss paraphrases, does not detect negation, and counts a factor as
+  cited when its word only describes the scenario ("4 passengers").
 - Free LLM access is rate-limited (~50 requests/day). Results depend on which free models are available on the day.
 
 ## 7. Individual contributions — TEAM
