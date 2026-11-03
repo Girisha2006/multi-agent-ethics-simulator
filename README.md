@@ -48,7 +48,7 @@ From [results/decision_lab.md](results/decision_lab.md):
 ## Optional LLM agents
 
 Put `OPENROUTER_API_KEY=...` in a git-ignored `.env` file. One request covers all four agents on a dilemma. Requests are
-counted before sending and cached. Failing models cool down, and the demo can replay real recordings when quota runs out.
+counted before sending and cached. Failing models cool down, and real recordings made with `tools/record_llm.py` replay when quota runs out.
 See [docs/llm-agents.md](docs/llm-agents.md).
 
 ## Documentation

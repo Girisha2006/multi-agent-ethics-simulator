@@ -19,7 +19,7 @@ browser ──► FastAPI (ethics_lab/app.py)
 
 | Path | Role |
 |---|---|
-| `ethics_lab/app.py` | App factory, static files, Before You Decide routes, mounts the Decision Lab routers |
+| `ethics_lab/app.py` | FastAPI app, static files, Before You Decide routes, mounts the Decision Lab routers |
 | `ethics_lab/scenarios.py`, `engine.py` | Before You Decide cases, reference policies, information gain, budget planner, benchmark |
 | `ethics_lab/comparisons.py` | Before You Decide model-comparison attempts and reference checks |
 | `ethics_lab/openrouter.py` | OpenRouter adapter: key loading, model list, live catalog and zero-price verification, request errors |

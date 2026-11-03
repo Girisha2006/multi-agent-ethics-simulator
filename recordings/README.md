@@ -5,7 +5,7 @@ API key, the free quota is used up, or every model failed. Replayed results are 
 `model_id` and `created_at`.
 
 Each entry is a `RunResult` (`status`, `source`, `dilemma_id`, `model_id`, `created_at`, `duration_ms`, `requests_used`, `answers`, `error`)
-plus a `cache_key`: the sha256 of the prompt version and the dilemma's stay and swerve lanes (`ethics_lab.decision.llm.cache_key`).
+plus a `cache_key`: the sha256 of the prompt version, the agent parameters and the dilemma's stay and swerve lanes (`ethics_lab.decision.llm.cache_key`).
 The newest `ok` entry with a matching key is replayed.
 
 Recordings must come from real runs. Never write or edit entries by hand, and never fabricate them. To make them:

@@ -50,6 +50,9 @@ Team 13 — Humanity's First Exam (HFE) · Demo track · Agents & Game Theory
 
 ## Live demo (about 5 minutes)
 
+**TEAM, the day before:** run `tools/record_llm.py` with the key (8 requests) so the LLM tab has real recordings to
+replay. Without a key *and* without recordings, the LLM tab is offline and its Run button is disabled.
+
 1. `./start.sh` → open <http://127.0.0.1:8000/decision>.
 2. **Dilemmas tab:** open *Pedestrians or passengers*. Show four choices and the welfare agent's ×1.5 pedestrian weight.
 3. Click the *role* variant. Show which agents change and that the base comparison marks it as expected.
@@ -58,4 +61,4 @@ Team 13 — Humanity's First Exam (HFE) · Demo track · Agents & Game Theory
 6. **LLM tab:** show the quota meter. If live quota is available, run one dilemma (1 request). Otherwise show a
    recorded result and say that it is a recording, with its date.
 
-Backup: if the network fails, everything except the LLM tab is offline. Recordings replay without a key.
+Backup: everything except the LLM tab works without a network. Recordings, once made, replay without a key.

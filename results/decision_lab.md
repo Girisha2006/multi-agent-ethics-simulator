@@ -63,4 +63,4 @@ Base dilemmas with disagreement:
 
 ## Limits
 
-Small authored scenario set; rules and parameters are stated modelling choices (see the report and docs/agents.md); the Sen agent is Sen-inspired, not a canonical algorithm; human data is used for direction only.
+Small authored scenario set; rules and parameters are stated modelling choices (see the report and docs/decision-lab.md); the Sen agent is Sen-inspired, not a canonical algorithm; human data is used for direction only.

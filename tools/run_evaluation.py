@@ -71,7 +71,7 @@ def markdown(report):
             group = {d[side]["group"]: dilemmas.describe_lane(d[side]) for side in ("stay", "swerve")}
             lines.append(f"- **{d['title']}** (`{d['id']}`): " + "; ".join(f"{NAMES[k]} spares {group[g]}" for k, g in r["spared"].items()))
     lines += ["", "## Limits", "",
-              "Small authored scenario set; rules and parameters are stated modelling choices (see the report and docs/agents.md); "
+              "Small authored scenario set; rules and parameters are stated modelling choices (see the report and docs/decision-lab.md); "
               "the Sen agent is Sen-inspired, not a canonical algorithm; human data is used for direction only.", ""]
     return "\n".join(lines)
 

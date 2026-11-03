@@ -31,10 +31,10 @@ Free OpenRouter models allow roughly **50 requests per day and 20 per minute**, 
 |---|---|
 | One request per dilemma | The model plays all four agents at once and returns `{"answers": {agent_id: {choice, explanation}}}`. A dilemma costs 1 request, not 4. |
 | Counted before sending | Every HTTP attempt is written to SQLite *before* the request goes out. The daily cap (45) and a sliding 60-second window (15) are read from that table, so they survive restarts. |
-| Cache | Successful results are cached by `sha256(prompt version, stay lane, swerve lane)`. Clicking *Run* again costs nothing unless **Repeat** is ticked. |
+| Cache | Successful results are cached by `sha256(prompt version, agent parameters, stay lane, swerve lane)`. Clicking *Run* again costs nothing unless **Repeat** is ticked; Repeat resets after each run. |
 | Fallback chain | Up to 3 models per run, recommended first, and only models the live catalog lists at zero price. Never a paid fallback. |
-| Cooldowns | A failing model is benched: 429 → `Retry-After` or 60 s; unavailable or not free → 600 s; other errors → 120 s. Stored in SQLite. |
-| Replay | With no key, quota used up, or every model failing, the newest matching **real** recording is replayed and labelled `source: "recording"` with its original model and date. |
+| Cooldowns | A failing model is benched: 429 → `Retry-After` (capped at 3600 s) or 60 s; unavailable or not free → 600 s; other errors → 120 s. A 401/402/403 is account-wide: the chain stops and every model cools for 600 s. Stored in SQLite. |
+| Replay | With no key, quota used up, or every model failing, the newest matching **real** recording is replayed and labelled `source: "recording"` with its original model and date. If live calls were tried first, the result carries `fallback` with the reason and `requests_used` shows what was spent. |
 | One at a time | A non-blocking lock allows a single live run; a second click gets a `busy` error instead of a second request. |
 | Strict output | Answers must be valid JSON with exactly the four agent ids, `stay`/`swerve`, and explanations of 1–80 words. Anything else is an `invalid_output` failure. No repairs. |
 
@@ -63,8 +63,13 @@ free quota; the 8 base dilemmas fit comfortably in one.
 | `POST /api/decision/llm/run` | `{"dilemma_id": "crossing", "repeat": false}` → one `RunResult` (`status`, `source`, `model_id`, `answers`, `error`, `requests_used`, …) |
 | `GET /api/decision/llm/results?dilemma_id=crossing` | Stored results for a dilemma, newest first |
 
-Errors are returned as a `RunResult` with `status: "error"` and a code such as `missing_key`, `quota_exhausted`,
-`minute_limit`, `busy`, `all_models_failed` or `invalid_output`, plus `retry_after` when known.
+Errors are returned as a `RunResult` with `status: "error"`, an `error.code` and `retry_after` when known. Local codes:
+`missing_key`, `quota_exhausted`, `minute_limit`, `busy`, `no_model_available`, `not_verified_free`, `invalid_output`.
+Provider codes are passed through: `http_429`, `http_404`, `http_401`/`402`/`403`, `timeout`, `network`,
+`provider_error`, `invalid_response`.
+
+The page labels each result *Live*, *Saved run* (from the cache, free) or *Recorded on …*, and shows how many requests the
+last run used.
 
 ## Before You Decide: model comparison
 

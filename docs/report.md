@@ -44,7 +44,7 @@ Eight base dilemmas use the Moral Machine format: a *stay* lane (no intervention
 holding characters with age, species, role (pedestrian/passenger), lawfulness, and a fatality probability. A generator
 produces **91 variants**, each changing exactly one feature in one lane (count, age, species, lawfulness, role,
 intervention/mirror, probability), for **99 dilemmas**. A unit test enforces the one-feature property. Variants that would
-change two features at once are skipped (§3 of `docs/decision-lab.md`).
+change two features at once are skipped ("Controlled variants" in `docs/decision-lab.md`).
 
 ### 3.2 Agents
 Each agent is a small deterministic module that returns a choice, a numeric trace and an explanation generated from that
@@ -60,8 +60,9 @@ trace. Full rules and parameters: `docs/decision-lab.md`.
 ### 3.3 Evaluation
 1. **Decision consistency.** Each agent's factor list is a pre-stated prediction. A variant of a feature the rule ignores
    must not change who is spared. Exact ties are excluded.
-2. **Explanation faithfulness.** A five-item checklist: the stated decision matches; factors that are influential by
-   one-step counterfactual change are cited; ignored factors are not cited; quoted numbers appear in the calculation.
+2. **Explanation faithfulness.** A five-item checklist: the decision matches the rule; the text names the returned choice;
+   factors that are influential by one-step counterfactual change are cited; ignored factors are not cited; quoted numbers
+   appear in the calculation or scenario.
 3. **Human comparison.** Pure contrasts for six Moral Machine preference directions, each run with the favoured group in
    both lanes. Direction only, no magnitudes.
 4. **Agreement** between the agents across all dilemmas.
