@@ -117,7 +117,7 @@ def test_invalid_output_is_an_error_without_substitution(env):
 @pytest.mark.parametrize("content", [
     json.dumps({"answers": {"expected_utility": {"choice": "stay", "explanation": "x"}}}),
     json.dumps({"answers": {a["id"]: {"choice": "left", "explanation": "x"} for a in agents.AGENTS}}),
-    json.dumps({"answers": {a["id"]: {"choice": "stay", "explanation": "word " * 81} for a in agents.AGENTS}})])
+    json.dumps({"answers": {a["id"]: {"choice": "stay", "explanation": "word " * 151} for a in agents.AGENTS}})])
 def test_strict_validation(env, content):
     env.behaviour["respond"] = lambda payload: {"choices": [{"message": {"content": content}}]}
     assert llm.run(D)["error"]["code"] == "invalid_output"
@@ -257,3 +257,39 @@ def test_malformed_recordings_are_ignored(env, monkeypatch):
     (env.tmp / "rec.json").write_text(json.dumps([bad_missing, bad_choice, no_model, recording(model="good")]))
     assert llm.run(D)["model_id"] == "good"
     assert [x["model_id"] for x in llm.results(D)] == ["good"]
+
+
+def test_forbidden_model_only_cools_itself(env):
+    seen = []
+    def respond(payload):
+        seen.append(payload["model"])
+        if len(seen) == 1:
+            raise openrouter.ProviderFailure("http_403", "denied")
+        return good()
+    env.behaviour["respond"] = respond
+    r = llm.run(D)
+    assert r["status"] == "ok" and r["requests_used"] == 2 and r["model_id"] == seen[1]
+    assert list(llm.cooldowns()) == [seen[0]]
+
+
+def test_json_wrapped_in_prose_or_fences_is_read_unchanged(env):
+    body = good()["choices"][0]["message"]["content"]
+    env.behaviour["respond"] = lambda payload: {"choices": [{"message": {"content": f"Here is the answer:\n```json\n{body}\n```"}}]}
+    r = llm.run(D)
+    assert r["status"] == "ok" and all(a["matches_reference"] for a in r["answers"])
+
+
+def test_unbalanced_json_is_not_repaired(env):
+    body = good()["choices"][0]["message"]["content"][:-1]
+    env.behaviour["respond"] = lambda payload: {"choices": [{"message": {"content": body}}]}
+    assert llm.run(D)["error"]["code"] == "invalid_output"
+
+
+def test_strict_json_models_are_tried_first(env):
+    plain = [m for m in LLMS if not next(x for x in openrouter.MODELS if x["id"] == m).get("recommended")]
+    for m in plain[:-1]:
+        env.catalog[m]["supported_parameters"] = ["temperature"]
+    env.behaviour["respond"] = raising("timeout")
+    llm.run(D)
+    order = [c["model"] for c in env.calls]
+    assert order[0] == LLMS[0] and order[1] == plain[-1]

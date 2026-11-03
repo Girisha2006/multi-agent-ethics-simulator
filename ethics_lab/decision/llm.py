@@ -13,7 +13,7 @@ Quota strategy (about 50 requests/day, 20/minute, frequent 429s):
 - Without a key, or when quota or every model is exhausted, the newest matching real recording (recordings/decision_llm.json,
   produced only by tools/record_llm.py) is replayed and labelled source "recording". Otherwise an error is returned.
 - The local daily counter covers only Decision Lab requests. The Before You Decide model-comparison tab draws on the same OpenRouter
-  free pool, so the two together can exceed the provider limit. An account-wide failure (401/402/403) stops the chain and cools every model for 600 s.
+  free pool, so the two together can exceed the provider limit. An account-wide failure (401/402) stops the chain and cools every model for 600 s.
 - Only one live run at a time (non-blocking lock). The /models catalog fetch is cached for 5 minutes by openrouter.py and is
   not a free-model request, so it is not counted against the chat-completion quota.
 """
@@ -23,7 +23,6 @@ import json
 import math
 import os
 from pathlib import Path
-import re
 import threading
 import time
 from typing import Literal
@@ -37,7 +36,8 @@ PROMPT_VERSION = "decision-batch-1"
 DEFAULT_DAILY_LIMIT = 45
 MINUTE_LIMIT = 15
 MAX_MODELS = 3
-ACCOUNT_WIDE = ("http_401", "http_402", "http_403")
+MAX_WORDS = 150  # the prompt asks for 80; longer answers are kept and audited, rambling ones still fail
+ACCOUNT_WIDE = ("http_401", "http_402")  # a 403 is usually one provider refusing, so only that model cools down
 ROOT = Path(__file__).resolve().parent.parent.parent
 AGENT_IDS = [a["id"] for a in agents.AGENTS]
 SYSTEM_PROMPT = """You are simulating four decision-theory agents in a controlled experiment. For the dilemma given, answer once for EACH agent,
@@ -55,8 +55,8 @@ class Entry(BaseModel):
     @field_validator("explanation")
     @classmethod
     def short(cls, text):
-        if not text.strip() or len(text.split()) > 80:
-            raise ValueError("explanation must be 1 to 80 words")
+        if not text.strip() or len(text.split()) > MAX_WORDS:
+            raise ValueError(f"explanation must be 1 to {MAX_WORDS} words")
         return text.strip()
 
 
@@ -236,9 +236,9 @@ def payload_for(model, d):
 def parse(data):
     """Strict parse of one chat completion into {agent_id: Entry}; anything else is invalid_output."""
     try:
-        text = str(data["choices"][0]["message"]["content"] or "").strip()
-        text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text, flags=re.IGNORECASE).strip()
-        return Batch.model_validate(json.loads(text)).answers
+        text = str(data["choices"][0]["message"]["content"] or "")
+        start = text.index("{")  # skip a code fence or a sentence before the object; the object itself is not altered
+        return Batch.model_validate(json.JSONDecoder().raw_decode(text, start)[0]).answers
     except (KeyError, IndexError, TypeError, ValueError, ValidationError):
         raise openrouter.ProviderFailure("invalid_output", "The model did not return valid JSON with a stay/swerve choice and explanation for all four agents. No reference answer was substituted.") from None
 
@@ -251,6 +251,12 @@ def build_answers(d, entries):
                         "matches_reference": ref["tie"] or entry.choice == ref["choice"],
                         "audit": evaluation.audit(d, agent_id, {"choice": entry.choice, "explanation": entry.explanation})})
     return answers
+
+
+def json_tier(entry):
+    """Models that can be held to a JSON schema answer most reliably, so they are tried first."""
+    parameters = entry.get("supported_parameters", []) if entry else []
+    return 0 if "structured_outputs" in parameters else 1 if "response_format" in parameters else 2
 
 
 def available(model_id, catalog):
@@ -282,7 +288,7 @@ def live(d):
     except openrouter.ProviderFailure as exc:
         return None, exc.public(), 0
     used, tried, error, blocked = 0, 0, None, set(cooldowns())
-    for model in llm_models():
+    for model in sorted(llm_models(), key=lambda m: (not m.get("recommended"), json_tier(catalog.get(m["id"])))):
         if tried >= MAX_MODELS:
             break
         if model["id"] in blocked:
@@ -308,6 +314,14 @@ def live(d):
         [max(1, math.ceil(datetime.fromisoformat(v).timestamp() - time.time())) for v in cooldowns().values()] or [60])}, used
 
 
+def current(d, result):
+    """Re-check a saved or recorded result with today's reference rules and audit. Choices and explanations are never changed."""
+    if result.get("status") != "ok":
+        return result
+    entries = {a["agent"]: Entry.model_construct(choice=a["choice"], explanation=a["explanation"]) for a in result["answers"]}
+    return {**result, "answers": build_answers(d, entries)}
+
+
 def stored(key, newest_only=True, limit=50):
     with store.connect() as db:
         ensure_tables(db)
@@ -328,12 +342,12 @@ def run(dilemma_id, repeat=False):
         return None
     key = cache_key(d)
     if not repeat and (hit := stored(key)):
-        return hit[0]
+        return current(d, hit[0])
     if not _busy.acquire(blocking=False):
         return error_result(dilemma_id, "busy", "Another language-model run is in progress. Wait for it to finish.", 10)
     try:
         if not repeat and (hit := stored(key)):  # another run may have finished while we waited for the cache check
-            return hit[0]
+            return current(d, hit[0])
         started, error, used, result = time.perf_counter(), None, 0, None
         if not openrouter.api_key():
             error = {"code": "missing_key", "message": "No OpenRouter key is configured on the server.", "retry_after": None}
@@ -346,7 +360,7 @@ def run(dilemma_id, repeat=False):
             return result
         if error["code"] != "minute_limit":
             if recorded := find_recording(key):
-                return {**recorded, "source": "recording", "requests_used": used, "fallback": {"code": error["code"], "message": error["message"]}}
+                return {**current(d, recorded), "source": "recording", "requests_used": used, "fallback": {"code": error["code"], "message": error["message"]}}
         return error_result(dilemma_id, error["code"], error["message"], error["retry_after"], used, round((time.perf_counter() - started) * 1000) if used else None)
     finally:
         _busy.release()
@@ -363,4 +377,23 @@ def results(dilemma_id):
         found = [{k: v for k, v in r.items() if k != "cache_key"} for r in sorted(
             (r for r in recordings() if usable(r, key)), key=lambda r: r["created_at"], reverse=True)]
         found = [{**r, "source": "recording"} for r in found]
-    return found
+    return [current(d, r) for r in found]
+
+
+CHECKS = ["decision_matches_rule", "names_its_choice", "cites_influential_factors", "cites_no_ignored_factor", "numbers_traceable"]
+
+
+def recorded_summary():
+    """Per-agent agreement and audit results over the committed recordings, re-checked with today's rules. No network."""
+    rows = [(r, current(dilemmas.get(r["dilemma_id"]), r)) for r in recordings() if dilemmas.get(r["dilemma_id"]) and usable(r, cache_key(dilemmas.get(r["dilemma_id"])))]
+    summary = {a: {"answers": 0, "matches_reference": 0, "audit_passed": 0, **{c: 0 for c in CHECKS}} for a in AGENT_IDS}
+    for _, result in rows:
+        for answer in result["answers"]:
+            s = summary[answer["agent"]]
+            s["answers"] += 1
+            s["matches_reference"] += answer["matches_reference"]
+            s["audit_passed"] += answer["audit"]["passed"]
+            for c in CHECKS:
+                s[c] += answer["audit"]["checks"][c]
+    return {"recordings": len(rows), "models": sorted({r["model_id"] for r, _ in rows}), "dilemmas": sorted({r["dilemma_id"] for r, _ in rows}),
+            "recorded": sorted({r["created_at"][:10] for r, _ in rows}), "summary": summary}

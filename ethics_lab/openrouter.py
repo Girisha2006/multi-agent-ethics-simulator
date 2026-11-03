@@ -19,12 +19,12 @@ from .scenarios import ACTIONS, FRAMEWORKS, fact_cards, spent_credits
 ROOT = Path(__file__).resolve().parent.parent
 PROMPT_VERSION = "ethical-evidence-3"
 MODELS = [
-    {"id": "qwen/qwen3.8-27b:free", "name": "Qwen3.8 27B", "kind": "llm", "note": "Reasoning candidate with low effort selected for interactive use."},
-    {"id": "nvidia/nemotron-3.5-lightning:free", "name": "Nemotron 3.5 Lightning", "kind": "llm", "note": "Speed-oriented candidate; actual completion time is measured per run."},
-    {"id": "google/gemma-4-26b-a4b-it:free", "name": "Gemma 4 26B A4B", "kind": "llm", "note": "Compact comparison candidate from a different model family."},
-    {"id": "nvidia/nemotron-3-super-120b-a12b:free", "name": "Nemotron 3 Super", "kind": "llm", "recommended": True, "note": "Start here to conserve quota. A live project smoke test passed; broader accuracy is unmeasured."},
-    {"id": "nvidia/nemotron-3-ultra-550b-a55b:free", "name": "Nemotron 3 Ultra", "kind": "llm", "note": "Larger reasoning candidate; latency and adherence must be measured."},
-    {"id": "thinkingmachines/inkling-small:free", "name": "Inkling Small", "kind": "llm", "note": "Reasoning comparison; its free provider restricts access to agentic harnesses."},
+    {"id": "nvidia/nemotron-3.5-super-vl:free", "name": "Nemotron 3.5 Super VL", "kind": "llm", "recommended": True, "note": "Start here: supports strict JSON output and answered a live Decision Lab probe in about 3 s."},
+    {"id": "dots-studio/dots-3-note-preview:free", "name": "dots.3 note preview", "kind": "llm", "note": "Supports strict JSON output; slower, and its answers do not always follow the stated rule."},
+    {"id": "google/gemma-4-31b-it:free", "name": "Gemma 4 31B", "kind": "llm", "note": "JSON mode; its free provider is often rate limited."},
+    {"id": "google/gemma-4-26b-a4b-it:free", "name": "Gemma 4 26B A4B", "kind": "llm", "note": "Compact comparison candidate from a different model family; often rate limited."},
+    {"id": "nvidia/nemotron-3-ultra-550b-a55b:free", "name": "Nemotron 3 Ultra", "kind": "llm", "note": "Large reasoning model without strict JSON output; about 35 s per answer and malformed JSON observed."},
+    {"id": "nvidia/nemotron-3.5-lightning:free", "name": "Nemotron 3.5 Lightning", "kind": "llm", "note": "Speed-oriented candidate without JSON mode; long, self-correcting answers observed."},
     {"id": "typesafe/jev-1.13", "name": "TypeSafe Jev 1.13", "kind": "decision", "note": "Paid input; typed decisions and probabilities, without generated explanations."},
 ]
 SYSTEM_PROMPT = """You are an independent ethical decision agent in a controlled experiment.
