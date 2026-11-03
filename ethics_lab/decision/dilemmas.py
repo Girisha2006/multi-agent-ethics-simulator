@@ -130,14 +130,19 @@ def get(dilemma_id):
     return next((d for d in catalog() if d["id"] == dilemma_id), None)
 
 
+PLURALS = {"child": "children", "adult": "adults", "elderly": "elderly people", "dog": "dogs"}
+
+
 def describe_lane(option):
     parts = []
     for c in option["characters"]:
-        noun = KINDS[c["kind"]] + ("s" if c["count"] != 1 and c["kind"] != "elderly" else "")
-        if c["kind"] == "elderly" and c["count"] != 1:
-            noun = "elderly people"
-        detail = "passenger" + ("s" if c["count"] != 1 else "") if c["role"] == "passenger" else (
-            "crossing on green" if c["lawful"] else "crossing on red") if c["kind"] != "dog" else ""
+        noun = KINDS[c["kind"]] if c["count"] == 1 else PLURALS[c["kind"]]
+        if c["kind"] == "dog":
+            detail = ""
+        elif c["role"] == "passenger":
+            detail = "passenger" if c["count"] == 1 else "passengers"
+        else:
+            detail = "crossing on green" if c["lawful"] else "crossing on red"
         parts.append(f"{c['count']} {noun}" + (f" ({detail})" if detail else ""))
     chance = "" if option["probability"] == 1 else f", fatal with {option['probability']:.0%} probability"
     return ", ".join(parts) + chance
