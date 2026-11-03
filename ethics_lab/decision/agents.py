@@ -94,9 +94,10 @@ def sen_welfare(d):
     trace = [f"{k}: Σ count × life-years/40 × (1.5 for pedestrians) × {d[k]['probability']:.2f} = {fmt(loss[k])}" for k in loss]
     why = "the weighted welfare losses are equal, so the car keeps its lane" if tie else f"its weighted welfare loss of {fmt(loss[choice])} is lower"
     text = (f"Weighted welfare loss is {fmt(loss['stay'])} for staying and {fmt(loss['swerve'])} for swerving. "
-            f"Each victim counts by expected life-years lost, so a child weighs more than an elderly person, "
-            f"and harm to pedestrians outside the car is weighted 1.5 times for concern for others. It chooses to {choice} because {why}.")
-    return _result("sen_welfare", choice, {k: r2(v) for k, v in loss.items()}, trace, text, [*loss.values(), 1.5], tie)
+            f"Each victim counts by expected life-years lost (a child 70, an adult 40, an elderly person 15, a pet 2, divided by 40), "
+            f"multiplied by the probability, and harm to pedestrians outside the car is weighted 1.5 times for concern for others. "
+            f"It chooses to {choice} because {why}.")
+    return _result("sen_welfare", choice, {k: r2(v) for k, v in loss.items()}, trace, text, [*loss.values(), 1.5, 70, 40, 15, 2], tie)
 
 
 def satisficing(d):
@@ -119,7 +120,8 @@ def satisficing(d):
         choice = next(k for k in p["inspection_order"] if deaths[k] <= best_deaths + p["human_death_slack"] + EPS)
         reason = f"no lane meets both aspirations, so it takes the first lane inspected with expected human deaths within 1 of the best ({fmt(best_deaths)})"
         trace.append(f"fallback: no lane met both aspirations; first lane meeting the death aspiration is {choice}")
-    text = (f"It inspects staying first, then swerving, and stops at the first acceptable lane. It chooses to {choice} because {reason}.")
+    text = (f"It inspects staying first, then swerving, and stops at the first acceptable lane. It counts only human deaths, "
+            f"multiplied by the probability, and law-abiding victims. It chooses to {choice} because {reason}.")
     return _result("satisficing", choice, {k: {"human_deaths": r2(deaths[k]), "lawful_victims": r2(lawful[k])} for k in deaths},
                    trace, text, [*deaths.values(), *lawful.values(), best_deaths, best_deaths + 1, 1])
 
@@ -135,11 +137,11 @@ def prospect_theory(d):
              f"loss: 2.25 × w−({d['swerve']['probability']:.2f}) × {fmt(endangered)}^0.88 = {fmt(loss)}",
              f"prospect value of swerving = {fmt(gain)} − {fmt(loss)} = {fmt(value)}; staying is the reference point (value 0)"]
     verdict = "positive, so it swerves" if choice == "swerve" else "not positive, so it stays"
-    text = (f"Staying is the reference point. Swerving gains {fmt(saved)} lives in the stay lane, weighted to {fmt(gain)}, "
+    text = (f"Staying is the reference point, and lives are scored with the shared table (human 1, pet 0.1). Swerving gains {fmt(saved)} lives in the stay lane, weighted to {fmt(gain)}, "
             f"but puts {fmt(endangered)} at risk, a loss weighted to {fmt(loss)} after loss aversion of 2.25 and probability weighting. "
             f"The prospect value of swerving is {fmt(value)}, {verdict}.")
     return _result("prospect_theory", choice, {"stay": 0.0, "swerve": r2(value)}, trace, text,
-                   [saved, endangered, gain, loss, value, 2.25, 0, d["stay"]["probability"], d["swerve"]["probability"]],
+                   [saved, endangered, gain, loss, value, 2.25, 0, 1, 0.1, d["stay"]["probability"], d["swerve"]["probability"]],
                    abs(value) < EPS)
 
 

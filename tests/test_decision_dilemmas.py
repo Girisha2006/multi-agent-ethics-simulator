@@ -41,4 +41,12 @@ def test_variants_do_not_mutate_bases():
 def test_describe_lane_is_human_readable():
     assert dilemmas.describe_lane(dilemmas.get("signal")["stay"]) == "3 adults (crossing on red)"
     assert dilemmas.describe_lane(dilemmas.get("brakes")["swerve"]) == "5 adults (crossing on green), fatal with 60% probability"
-    assert dilemmas.describe_lane(dilemmas.get("barrier")["swerve"]) == "2 adults (passengers)"
+    assert dilemmas.describe_lane(dilemmas.get("barrier")["swerve"]) == "4 adults (passengers)"
+
+
+def test_role_variant_never_changes_lawfulness():
+    from ethics_lab.decision import agents
+    for d in dilemmas.catalog():
+        varied = dilemmas._vary(d, "role", "swerve")
+        if varied:
+            assert agents.law_abiding(d["swerve"]) == agents.law_abiding(varied[0]["swerve"]), d["id"]

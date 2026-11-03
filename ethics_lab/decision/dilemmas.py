@@ -32,8 +32,8 @@ BASES = [
      "stay": lane("A", [people("adult", 5)]), "swerve": lane("B", [people("adult", 1)])},
     {"id": "close-call", "title": "Three against two", "description": "Three pedestrians ahead, two in the other lane. Every rule must weigh a small difference.",
      "stay": lane("A", [people("adult", 3)]), "swerve": lane("B", [people("adult", 2)])},
-    {"id": "barrier", "title": "Pedestrians or passengers", "description": "Staying hits two pedestrians. Swerving sends the car into a barrier and kills its two passengers.",
-     "stay": lane("A", [people("adult", 2)]), "swerve": lane("B", [people("adult", 2, role="passenger")])},
+    {"id": "barrier", "title": "Pedestrians or passengers", "description": "Staying hits three pedestrians. Swerving sends the car into a barrier and kills its four passengers.",
+     "stay": lane("A", [people("adult", 3)]), "swerve": lane("B", [people("adult", 4, role="passenger")])},
     {"id": "generations", "title": "Old and young", "description": "Two elderly pedestrians are ahead. Two children cross in the other lane.",
      "stay": lane("A", [people("elderly", 2)]), "swerve": lane("B", [people("child", 2)])},
     {"id": "signal", "title": "Against the signal", "description": "Three pedestrians cross on a red signal ahead. Two others in the swerve lane cross legally.",
@@ -55,65 +55,75 @@ def _replace(characters, source, target):
     return changed
 
 
-def _vary(base, feature):
-    """Return (dilemma, description) changing exactly one feature, or None if not applicable."""
+SIDES = {"count": ("stay", "swerve"), "age": ("stay", "swerve"), "species": ("stay", "swerve"), "lawful": ("stay", "swerve"),
+         "role": ("swerve",), "intervention": (None,), "probability": ("stay", "swerve")}
+
+
+def _vary(base, feature, side):
+    """Return (dilemma, description) changing exactly one feature in one lane, or None if not applicable.
+    Passengers can only be in the swerve lane, because swerving into a barrier is what endangers them."""
     d = deepcopy(base)
-    stay, swerve = d["stay"]["characters"], d["swerve"]["characters"]
+    if feature == "intervention":
+        d["stay"], d["swerve"] = d["swerve"], d["stay"]
+        return d, "The two groups exchange lanes"
+    group = d[side]["characters"]
+    humans = [c for c in group if c["kind"] != "dog"]
     if feature == "count":
-        stay[0]["count"] += 2
-        return d, "Two more characters in the stay lane"
+        group[0]["count"] += 2
+        return d, f"Two more characters in the {side} lane"
     if feature == "age":
-        if _replace(stay, "adult", "child") or _replace(stay, "elderly", "child"):
-            return d, "Stay-lane characters become children"
+        if _replace(group, "adult", "child") or _replace(group, "elderly", "child"):
+            return d, f"{side.capitalize()}-lane characters become children"
+        if _replace(group, "child", "elderly"):
+            return d, f"{side.capitalize()}-lane children become elderly people"
         return None
     if feature == "species":
-        if any(c["kind"] == "dog" for c in swerve):
-            _replace(swerve, "dog", "adult")
-            return d, "Swerve-lane dogs become adults"
-        for c in swerve:
-            c.update(kind="dog", role="pedestrian", lawful=True)
-        return d, "Swerve-lane humans become dogs"
+        if not humans:
+            _replace(group, "dog", "adult")
+            return d, f"{side.capitalize()}-lane dogs become adults"
+        if any(c["role"] == "passenger" for c in humans):
+            return None  # pets as passengers would also change role
+        for c in humans:
+            c.update(kind="dog")
+        return d, f"{side.capitalize()}-lane humans become dogs"
     if feature == "lawful":
-        walkers = [c for c in stay if c["role"] == "pedestrian" and c["kind"] != "dog"]
+        walkers = [c for c in humans if c["role"] == "pedestrian"]
         if not walkers:
             return None
         for c in walkers:
             c["lawful"] = not c["lawful"]
-        return d, "Stay-lane pedestrians now cross on a " + ("green" if walkers[0]["lawful"] else "red") + " signal"
+        return d, f"{side.capitalize()}-lane pedestrians now cross on a " + ("green" if walkers[0]["lawful"] else "red") + " signal"
     if feature == "role":
-        if all(c["kind"] == "dog" for c in swerve):
-            return None
-        if all(c["role"] == "passenger" for c in swerve):
-            for c in swerve:
+        if not humans or any(c["lawful"] is False for c in humans):
+            return None  # red-signal crossers becoming passengers would also change lawfulness
+        if all(c["role"] == "passenger" for c in humans):
+            for c in humans:
                 c.update(role="pedestrian", lawful=True)
-            return d, "Swerve-lane passengers become pedestrians"
-        for c in swerve:
-            if c["kind"] != "dog":
-                c.update(role="passenger", lawful=None)
+            return d, "Swerve-lane passengers become pedestrians crossing on green"
+        for c in humans:
+            c.update(role="passenger", lawful=None)
         return d, "Swerve-lane pedestrians become passengers"
-    if feature == "intervention":
-        d["stay"], d["swerve"] = d["swerve"], d["stay"]
-        return d, "The two groups exchange lanes"
     if feature == "probability":
-        target = "swerve" if d["swerve"]["probability"] == 1 else "stay"
-        d[target]["probability"] = 0.5
-        return d, f"The {target} lane becomes fatal with 50% probability"
+        d[side]["probability"] = 0.5 if d[side]["probability"] == 1 else 1.0
+        return d, f"The {side} lane becomes fatal with {d[side]['probability']:.0%} probability"
     raise ValueError(feature)
 
 
 def variants(base):
     result = []
-    for feature in FEATURES:
-        varied = _vary(base, feature)
-        if varied:
-            dilemma, change = varied
-            dilemma.update(id=f"{base['id']}~{feature}", base=base["id"], feature=feature, change=change)
-            result.append(dilemma)
+    for feature, sides in SIDES.items():
+        for side in sides:
+            varied = _vary(base, feature, side)
+            if varied:
+                dilemma, change = varied
+                suffix = feature if side is None else f"{feature}-{side}"
+                dilemma.update(id=f"{base['id']}~{suffix}", base=base["id"], feature=feature, side=side, change=change)
+                result.append(dilemma)
     return result
 
 
 def catalog():
-    return [{**deepcopy(b), "base": None, "feature": None, "change": None} for b in BASES] + [v for b in BASES for v in variants(b)]
+    return [{**deepcopy(b), "base": None, "feature": None, "side": None, "change": None} for b in BASES] + [v for b in BASES for v in variants(b)]
 
 
 def get(dilemma_id):
