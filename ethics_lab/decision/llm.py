@@ -12,6 +12,8 @@ Quota strategy (about 50 requests/day, 20/minute, frequent 429s):
   There is never a paid fallback and never a reference-answer substitution.
 - Without a key, or when quota or every model is exhausted, the newest matching real recording (recordings/decision_llm.json,
   produced only by tools/record_llm.py) is replayed and labelled source "recording". Otherwise an error is returned.
+- The local daily counter covers only Decision Lab requests. The Before You Decide model-comparison tab draws on the same OpenRouter
+  free pool, so the two together can exceed the provider limit. An account-wide failure (401/402/403) stops the chain and cools every model for 600 s.
 - Only one live run at a time (non-blocking lock). The /models catalog fetch is cached for 5 minutes by openrouter.py and is
   not a free-model request, so it is not counted against the chat-completion quota.
 """
@@ -35,6 +37,7 @@ PROMPT_VERSION = "decision-batch-1"
 DEFAULT_DAILY_LIMIT = 45
 MINUTE_LIMIT = 15
 MAX_MODELS = 3
+ACCOUNT_WIDE = ("http_401", "http_402", "http_403")
 ROOT = Path(__file__).resolve().parent.parent.parent
 AGENT_IDS = [a["id"] for a in agents.AGENTS]
 SYSTEM_PROMPT = """You are simulating four decision-theory agents in a controlled experiment. For the dilemma given, answer once for EACH agent,
@@ -85,7 +88,7 @@ def recordings_path():
 
 
 def cache_key(d):
-    body = json.dumps([PROMPT_VERSION, d["stay"], d["swerve"]], sort_keys=True, separators=(",", ":"))
+    body = json.dumps([PROMPT_VERSION, agents.PARAMETERS, d["stay"], d["swerve"]], sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(body.encode()).hexdigest()
 
 
@@ -143,10 +146,15 @@ def cooldowns():
 
 
 def set_cooldown(model_id, failure):
-    seconds = {"http_429": failure.retry_after or 60, "http_404": 600, "not_free": 600}.get(failure.code, 120)
+    seconds = {"http_429": min(failure.retry_after or 60, 3600), "http_404": 600, "not_free": 600}.get(failure.code, 120)
+    cool([model_id], seconds, failure.code)
+
+
+def cool(model_ids, seconds, code):
     with store.connect() as db:
         ensure_tables(db)
-        db.execute("INSERT OR REPLACE INTO llm_cooldowns VALUES (?, ?, ?)", (model_id, time.time() + seconds, failure.code))
+        for model_id in model_ids:
+            db.execute("INSERT OR REPLACE INTO llm_cooldowns VALUES (?, ?, ?)", (model_id, time.time() + seconds, code))
 
 
 def recordings():
@@ -158,10 +166,19 @@ def recordings():
 
 
 def find_recording(key):
-    matches = [r for r in recordings() if r.get("cache_key") == key and r.get("status") == "ok"]
+    matches = [r for r in recordings() if usable(r, key)]
     if not matches:
         return None
-    return {k: v for k, v in max(matches, key=lambda r: r.get("created_at") or "").items() if k != "cache_key"}
+    return {k: v for k, v in max(matches, key=lambda r: r["created_at"]).items() if k != "cache_key"}
+
+
+def usable(r, key):
+    """A recording is replayed only when it is complete and well formed."""
+    answers = r.get("answers")
+    if not (r.get("cache_key") == key and r.get("status") == "ok" and isinstance(r.get("model_id"), str) and isinstance(r.get("created_at"), str)
+            and isinstance(answers, list) and len(answers) == len(AGENT_IDS) and all(isinstance(a, dict) for a in answers)):
+        return False
+    return sorted(str(a.get("agent")) for a in answers) == sorted(AGENT_IDS) and all(a.get("choice") in ("stay", "swerve") for a in answers)
 
 
 def status():
@@ -250,9 +267,12 @@ def attempt(d, model, entry):
     try:
         data = openrouter.request("v1/chat/completions", payload=payload_for(entry, d), authenticated=True, timeout=60)
         entries = parse(data)
+        answers = build_answers(d, entries)
     except openrouter.ProviderFailure as exc:
         return None, exc
-    return {"model_id": model["id"], "duration_ms": round((time.perf_counter() - started) * 1000), "answers": build_answers(d, entries)}, None
+    except Exception:  # e.g. RecursionError from a hostile JSON body: the attempt is already counted
+        return None, openrouter.ProviderFailure("invalid_output", "The model response could not be processed. No reference answer was substituted.")
+    return {"model_id": model["id"], "duration_ms": round((time.perf_counter() - started) * 1000), "answers": answers}, None
 
 
 def live(d):
@@ -281,6 +301,9 @@ def live(d):
             return {**done, "requests_used": used}, None, used
         set_cooldown(model["id"], failure)
         error = failure.public()
+        if failure.code in ACCOUNT_WIDE:
+            cool([m["id"] for m in llm_models()], 600, failure.code)
+            break
     return None, error or {"code": "no_model_available", "message": "Every language model is cooling down after recent failures.", "retry_after": min(
         [max(1, math.ceil(datetime.fromisoformat(v).timestamp() - time.time())) for v in cooldowns().values()] or [60])}, used
 
@@ -336,6 +359,6 @@ def results(dilemma_id):
     found = stored(key, newest_only=False)
     if not found:
         found = [{k: v for k, v in r.items() if k != "cache_key"} for r in sorted(
-            (r for r in recordings() if r.get("cache_key") == key and r.get("status") == "ok"), key=lambda r: r.get("created_at") or "", reverse=True)]
+            (r for r in recordings() if usable(r, key)), key=lambda r: r["created_at"], reverse=True)]
         found = [{**r, "source": "recording"} for r in found]
     return found

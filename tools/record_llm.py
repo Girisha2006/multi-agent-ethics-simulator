@@ -5,6 +5,7 @@ Usage: python tools/record_llm.py [dilemma_id ...]   (default: the 8 base dilemm
 from pathlib import Path
 import json
 import sys
+import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from ethics_lab import openrouter
@@ -31,6 +32,12 @@ def main(ids):
             continue
         result = llm.run(dilemma_id, repeat=True)
         requests += result["requests_used"]
+        if (result["error"] or {}).get("code") == "minute_limit":
+            wait = min(result["error"]["retry_after"] or 60, 60)
+            print(f"{dilemma_id}: minute limit, waiting {wait}s once")
+            time.sleep(wait)
+            result = llm.run(dilemma_id, repeat=True)
+            requests += result["requests_used"]
         if result["status"] == "ok" and result["source"] == "live":
             saved.append({**result, "cache_key": key})
             have.add(key)

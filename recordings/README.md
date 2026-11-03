@@ -17,3 +17,5 @@ OPENROUTER_API_KEY=... python tools/record_llm.py crossing brakes # chosen dilem
 
 The tool runs live (one request per dilemma, within the daily limit `DECISION_LLM_DAILY_LIMIT`, default 45), appends successful results,
 skips dilemmas already recorded, stops when quota is exhausted, and prints a summary.
+
+The local daily counter covers only Decision Lab requests. The Before You Decide model-comparison tab draws on the same OpenRouter free pool, so the two together can exceed the provider limit.

@@ -210,3 +210,48 @@ def test_router(env):
     assert len(c.get("/api/decision/llm/results", params={"dilemma_id": D}).json()["results"]) == 1
     assert c.post("/api/decision/llm/run", json={"dilemma_id": "nope"}).status_code == 404
     assert c.get("/api/decision/llm/results", params={"dilemma_id": "nope"}).status_code == 404
+
+
+def test_account_wide_failure_stops_chain_and_cools_all_models(env):
+    env.behaviour["respond"] = raising("http_401")
+    r = llm.run(D)
+    assert r["error"]["code"] == "http_401" and r["requests_used"] == 1 and len(env.calls) == 1
+    assert set(llm.status()["cooldowns"]) == set(LLMS)
+    again = llm.run(D)
+    assert again["requests_used"] == 0 and len(env.calls) == 1
+
+
+def test_retry_after_cooldown_is_capped(env):
+    from datetime import datetime, timezone
+    env.behaviour["respond"] = raising("http_429", 999999)
+    llm.run(D)
+    until = datetime.fromisoformat(llm.status()["cooldowns"][LLMS[0]])
+    assert (until - datetime.now(timezone.utc)).total_seconds() <= 3601
+
+
+def test_unexpected_parse_exception_is_invalid_output(env, monkeypatch):
+    def boom(data):
+        raise RecursionError("deep")
+    monkeypatch.setattr(llm, "parse", boom)
+    r = llm.run(D)
+    assert r["status"] == "error" and r["error"]["code"] == "invalid_output" and r["requests_used"] == 3
+
+
+def test_cache_key_depends_on_parameters(monkeypatch):
+    d = dilemmas.get(D)
+    before = llm.cache_key(d)
+    monkeypatch.setitem(agents.PARAMETERS, "extra", {"x": 1})
+    assert llm.cache_key(d) != before
+
+
+def test_malformed_recordings_are_ignored(env, monkeypatch):
+    monkeypatch.setattr(openrouter, "api_key", lambda: "")
+    bad_missing = recording(created="2026-09-01T00:00:00+00:00", model="bad")
+    bad_missing["answers"] = bad_missing["answers"][:3]
+    bad_choice = recording(created="2026-08-01T00:00:00+00:00", model="bad2")
+    bad_choice["answers"][0]["choice"] = "left"
+    no_model = recording(created="2026-07-01T00:00:00+00:00")
+    del no_model["model_id"]
+    (env.tmp / "rec.json").write_text(json.dumps([bad_missing, bad_choice, no_model, recording(model="good")]))
+    assert llm.run(D)["model_id"] == "good"
+    assert [x["model_id"] for x in llm.results(D)] == ["good"]
