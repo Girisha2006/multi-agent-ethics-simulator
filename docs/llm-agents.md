@@ -1,22 +1,80 @@
-# OpenRouter model comparison
+# LLM agents (optional)
 
-The dashboard's **Model comparison** tab adds independent remote model agents to the three local ethical reference policies. Pick a framework, select models, and compare them at the current disclosure state.
-
-The same model can play any of the three framework roles. Model count, ethical-framework count, and question-strategy count are different dimensions. Each selected model receives its own request and cannot see other agents' responses.
+Both labs can compare free OpenRouter language models with their deterministic reference agents. **Nothing in either lab
+needs a model**: every reference result, test and evaluation number runs offline. LLM results are an add-on, always labelled
+with their source, and never substituted by reference answers.
 
 ## Configuration
 
-The server reads `OPENROUTER_API_KEY` from its environment or the project-root `.env` file:
+The server reads `OPENROUTER_API_KEY` from its environment or from a project-root `.env` file (git-ignored):
 
 ```dotenv
 OPENROUTER_API_KEY=your_key_here
 ```
 
-The user's key was copied from `env.txt` into `.env` during setup. Both files are ignored by version control and are outside the static directory. The key is never returned by the API, saved in a model record, or sent to the browser. [.env.example](.env.example) contains only the setting name.
+The key is never returned by the API, saved in a result or recording, or sent to the browser. [.env.example](../.env.example)
+contains only the setting name.
 
-The application uses the existing HTTPX dependency. No OpenAI SDK, separate TypeSafe SDK, model download, or GPU is required.
+| Variable | Default | Effect |
+|---|---|---|
+| `OPENROUTER_API_KEY` | unset | Enables live calls. Without it the Decision Lab replays recordings only. |
+| `DECISION_LLM_DAILY_LIMIT` | 45 | Local cap on Decision Lab chat requests per UTC day, kept below the provider's ~50. |
+| `DECISION_RECORDINGS` | `recordings/decision_llm.json` | Recording file used for replay. |
+| `ETHICS_DB` | `data/runs.sqlite3` | SQLite file holding the quota counter, cooldowns, cache and results. |
 
-## Available model options
+## Decision Lab: four agents in one request
+
+Free OpenRouter models allow roughly **50 requests per day and 20 per minute**, and individual free endpoints often return
+429 or disappear. The Decision Lab is built around that limit (`ethics_lab/decision/llm.py`):
+
+| Measure | How it works |
+|---|---|
+| One request per dilemma | The model plays all four agents at once and returns `{"answers": {agent_id: {choice, explanation}}}`. A dilemma costs 1 request, not 4. |
+| Counted before sending | Every HTTP attempt is written to SQLite *before* the request goes out. The daily cap (45) and a sliding 60-second window (15) are read from that table, so they survive restarts. |
+| Cache | Successful results are cached by `sha256(prompt version, stay lane, swerve lane)`. Clicking *Run* again costs nothing unless **Repeat** is ticked. |
+| Fallback chain | Up to 3 models per run, recommended first, and only models the live catalog lists at zero price. Never a paid fallback. |
+| Cooldowns | A failing model is benched: 429 → `Retry-After` or 60 s; unavailable or not free → 600 s; other errors → 120 s. Stored in SQLite. |
+| Replay | With no key, quota used up, or every model failing, the newest matching **real** recording is replayed and labelled `source: "recording"` with its original model and date. |
+| One at a time | A non-blocking lock allows a single live run; a second click gets a `busy` error instead of a second request. |
+| Strict output | Answers must be valid JSON with exactly the four agent ids, `stay`/`swerve`, and explanations of 1–80 words. Anything else is an `invalid_output` failure. No repairs. |
+
+Each answer is checked against the deterministic agent (`matches_reference`; either lane counts on a reference tie) and
+put through the same five-item explanation audit as the reference explanations (`docs/decision-lab.md`, Evaluation §2).
+
+### Recording real runs for the demo
+
+Recordings make the LLM tab useful offline and on days when the free quota is gone. They must come from real runs; never
+write or edit them by hand.
+
+```bash
+OPENROUTER_API_KEY=... .venv/bin/python tools/record_llm.py                  # the 8 base dilemmas (8 requests)
+OPENROUTER_API_KEY=... .venv/bin/python tools/record_llm.py crossing brakes  # chosen dilemmas
+```
+
+The tool skips dilemmas already recorded, stops when the quota or key is unavailable, and prints a summary. See
+[recordings/README.md](../recordings/README.md) for the file format. Recording all 99 dilemmas takes about three days of
+free quota; the 8 base dilemmas fit comfortably in one.
+
+### API
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/decision/llm/status` | Mode, key present, daily and per-minute usage, cooldowns, recording count |
+| `POST /api/decision/llm/run` | `{"dilemma_id": "crossing", "repeat": false}` → one `RunResult` (`status`, `source`, `model_id`, `answers`, `error`, `requests_used`, …) |
+| `GET /api/decision/llm/results?dilemma_id=crossing` | Stored results for a dilemma, newest first |
+
+Errors are returned as a `RunResult` with `status: "error"` and a code such as `missing_key`, `quota_exhausted`,
+`minute_limit`, `busy`, `all_models_failed` or `invalid_output`, plus `retry_after` when known.
+
+## Before You Decide: model comparison
+
+The original lab's **Model comparison** tab adds independent remote model agents to the three local ethical reference
+policies. Pick a framework, select models, and compare them at the current disclosure state.
+
+The same model can play any of the three framework roles. Model count, ethical-framework count, and question-strategy count
+are different dimensions. Each selected model receives its own request and cannot see other agents' responses.
+
+### Available model options
 
 Catalog checked on 27 September 2026. The server checks current zero pricing before a free call and sets provider maximum prompt/completion prices to zero. A provider may still reject, throttle, or withdraw an endpoint.
 
@@ -34,7 +92,7 @@ Catalog checked on 27 September 2026. The server checks current zero pricing bef
 
 Sources: [live catalog](https://openrouter.ai/api/v1/models), [Qwen](https://openrouter.ai/qwen/qwen3.8-27b:free), [Nemotron Lightning](https://openrouter.ai/nvidia/nemotron-3.5-lightning:free), [Gemma](https://openrouter.ai/google/gemma-4-26b-a4b-it:free), [Jev](https://openrouter.ai/typesafe/jev-1.13).
 
-## Jev is a separate kind of model
+### Jev is a separate kind of model
 
 Jev returns typed choices and probability distributions. It does not generate explanations. Its adapter uses `POST /api/alpha/decisions`, rather than pretending it is a chat-completion model.
 
@@ -44,7 +102,7 @@ The same evidence packet is supplied to Jev. It answers a decision question and,
 
 Sources: [Jev documentation](https://openrouter.ai/docs/guides/community/jev), [Decisions API](https://openrouter.ai/docs/api/api-reference/alphadecisions/submit-a-decisions-request).
 
-## Quota and response time
+### Quota and response time
 
 OpenRouter generally permits 50 free requests per day and 20 per minute, with a higher daily allowance after a qualifying credit purchase. The authenticated `GET /api/v1/key` response is used to show this account's actual daily counter. During setup it reported a 50-request allowance. Provider capacity and data-policy requirements are additional constraints.
 
@@ -63,7 +121,7 @@ Saved attempts are not counted as independent repetitions. A timeout may leave w
 
 Source: [OpenRouter limits](https://openrouter.ai/docs/api_reference/limits).
 
-## What each model sees and how it is evaluated
+### What each model sees and how it is evaluated
 
 The input is built from an explicit allowlist:
 
@@ -82,7 +140,7 @@ Each journal entry contains the evidence snapshot, prompt version, requested/ret
 
 The UI hides prior-state outputs from the current results area and keeps them under history. Replay hides model results entirely, preventing later outputs from appearing in an earlier evidence frame.
 
-## Live validation record
+### Live validation record
 
 One successful relay-case call to **Nemotron 3 Super**, prompt version `ethical-evidence-3`, returned:
 
@@ -99,13 +157,13 @@ Automated validation includes adapter/API tests with mocked upstream responses, 
 
 To run a small explicit free-only live probe:
 
-```powershell
-conda run --no-capture-output -n gpu_env python tools/check_openrouter.py --models nvidia/nemotron-3-super-120b-a12b:free
+```bash
+.venv/bin/python tools/check_openrouter.py --models nvidia/nemotron-3-super-120b-a12b:free
 ```
 
 This consumes a real free request and stores a new run. The tool never calls Jev or any paid model.
 
-## API
+### API
 
 | Endpoint | Purpose |
 |---|---|
