@@ -1,3 +1,5 @@
+import pytest
+
 from ethics_lab.decision import agents, dilemmas, evaluation
 
 
@@ -67,3 +69,14 @@ def test_evaluation_script_writes_results(tmp_path, monkeypatch):
     text = (tmp_path / "results" / "decision_lab.md").read_text()
     assert "## 1. Decision consistency" in text and "| Expected utility |" in text
     assert (tmp_path / "results" / "decision_lab.json").stat().st_size > 1000
+
+
+@pytest.mark.parametrize("text", ["Swerve has the lower loss, so swerve.", "Stay fails the slack, swerve is accepted.", "Accept swerve: 1 death.", "Stay loss 3, swerve loss 2. Lower loss is swerve.", "Swerve. Stay loss 1, swerve loss 0.2.", "Swerve is lower."])
+def test_short_decision_phrasings_are_recognised(text):
+    assert evaluation.states_choice(text, "swerve") and not evaluation.states_choice(text, "stay")
+
+
+def test_rule_constants_and_signed_losses_are_traceable():
+    d = dilemmas.get("crossing")
+    out = {"choice": "swerve", "explanation": "Loss value -2.25 uses exponent 0.88; prospect value 1.87 is positive, so swerve."}
+    assert evaluation.audit(d, "prospect_theory", out)["stray_numbers"] == []

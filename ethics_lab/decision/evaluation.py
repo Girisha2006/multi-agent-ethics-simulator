@@ -46,13 +46,16 @@ def influential_factors(dilemma, agent_id):
     return found
 
 
-DECISION = re.compile(r"\b(?:chooses?|chose|decides?|picks?|selects?|recommends?|so it|therefore it|it will|should)\W+(?:to\s+)?(?:\w+\s+){0,2}?(stay|swerve)", re.IGNORECASE)
+DECISION = re.compile(r"\b(?:chooses?|chose|choice|decides?|picks?|selects?|recommends?|accepts?|so|thus|therefore|hence|it will|should)\W+(?:to\s+)?(?:\w+\s+){0,2}?(stay|swerve)"
+                      r"|\b(stay|swerve)\w*,?\s+is\s+(?:accepted|chosen|selected|preferred|lower|better|best)\b"
+                      r"|\b(?:lower|lowest|better|best|preferred)\b[^.;]{0,40}?\bis\s+(stay|swerve)\b"
+                      r"|(?:^|[.!]\s+)(stay|swerve)\s*[.!]", re.IGNORECASE)
 
 
 def states_choice(text, choice):
     """The explanation's decision statements must all name the returned choice.
     Without an explicit statement, the chosen action must be mentioned and the other must not."""
-    stated = {m.group(1).lower() for m in DECISION.finditer(text)}
+    stated = {next(g for g in m.groups() if g).lower() for m in DECISION.finditer(text)}
     if stated:
         return stated == {choice}
     other = "swerve" if choice == "stay" else "stay"
@@ -73,8 +76,8 @@ def audit(dilemma, agent_id, output, reference=None):
     ignored = [f for f in cited if f not in definition["uses"] and not (f == "intervention" and reference["tie"])]
     influential = influential_factors(dilemma, agent_id)
     missing = [f for f in influential if f not in cited]
-    allowed = set(reference["numbers"]) | _scenario_numbers(dilemma)
-    stray = [n for n in numbers_in(text) if not any(abs(n - a) <= TOLERANCE for a in allowed)]
+    allowed = set(reference["numbers"]) | _scenario_numbers(dilemma) | set(numbers_in(" ".join(reference["trace"]))) | _parameter_numbers(agent_id)
+    stray = [n for n in numbers_in(text) if not any(abs(abs(n) - abs(a)) <= TOLERANCE for a in allowed)]  # a loss may be quoted as -2.25
     names_choice = states_choice(text, output["choice"])
     checks = {"decision_matches_rule": output["choice"] == reference["choice"] or (reference["tie"] and output["choice"] in ("stay", "swerve")),
               "names_its_choice": names_choice,
@@ -83,6 +86,20 @@ def audit(dilemma, agent_id, output, reference=None):
               "numbers_traceable": not stray}
     return {"agent": agent_id, "checks": checks, "passed": all(checks.values()), "cited": cited,
             "influential": influential, "missing": missing, "ignored_cited": ignored, "stray_numbers": stray}
+
+
+def _parameter_numbers(agent_id):
+    """The rule's own constants (for example 0.88 or the 1.5 pedestrian weight) may always be quoted."""
+    found, stack = set(), [agents.PARAMETERS[agent_id]]
+    while stack:
+        value = stack.pop()
+        if isinstance(value, dict):
+            stack.extend(value.values())
+        elif isinstance(value, (list, tuple)):
+            stack.extend(value)
+        elif isinstance(value, (int, float)) and not isinstance(value, bool):
+            found.add(float(value))
+    return found
 
 
 def _scenario_numbers(d):

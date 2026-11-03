@@ -1,4 +1,4 @@
-"""Regenerate the deterministic Decision Lab evaluation in results/ (no network, no API key).
+"""Regenerate the Decision Lab evaluation in results/ (no network, no API key). LLM numbers come only from committed recordings.
 
 Usage: python tools/run_evaluation.py
 """
@@ -9,7 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from ethics_lab.decision import agents, dilemmas, evaluation  # noqa: E402
+from ethics_lab.decision import agents, dilemmas, evaluation, llm  # noqa: E402
 
 NAMES = {a["id"]: a["name"] for a in agents.AGENTS}
 
@@ -70,10 +70,23 @@ def markdown(report):
             d = dilemmas.get(r["dilemma"])
             group = {d[side]["group"]: dilemmas.describe_lane(d[side]) for side in ("stay", "swerve")}
             lines.append(f"- **{d['title']}** (`{d['id']}`): " + "; ".join(f"{NAMES[k]} spares {group[g]}" for k, g in r["spared"].items()))
+    lines += llm_section(llm.recorded_summary())
     lines += ["", "## Limits", "",
               "Small authored scenario set; rules and parameters are stated modelling choices (see the report and docs/decision-lab.md); "
               "the Sen agent is Sen-inspired, not a canonical algorithm; human data is used for direction only.", ""]
     return "\n".join(lines)
+
+
+def llm_section(rec):
+    lines = ["", "## 5. LLM agents (recorded runs)", ""]
+    if not rec["recordings"]:
+        return lines + ["No recordings yet. Run `tools/record_llm.py` with an OpenRouter key to add real runs; nothing is reported until then."]
+    lines += [f"{rec['recordings']} real batched runs ({', '.join(f'`{m}`' for m in rec['models'])}, recorded {', '.join(rec['recorded'])}), "
+              "one request per dilemma for all four agents. Answers are re-checked against today's rules and audit; their text is never changed.", ""]
+    header = ["Agent", "matches rule", "audit passed", "names choice", "cites influential", "no ignored factor", "numbers traceable"]
+    keys = ["matches_reference", "audit_passed", "names_its_choice", "cites_influential_factors", "cites_no_ignored_factor", "numbers_traceable"]
+    lines += table(header, [[NAMES[a], *[f"{s[k]}/{s['answers']}" for k in keys]] for a, s in rec["summary"].items()])
+    return lines + ["", "A small sample of a single free model: this describes these recordings, not language models in general."]
 
 
 def main():
@@ -82,8 +95,9 @@ def main():
     out.mkdir(exist_ok=True)
     (out / "decision_lab.json").write_text(json.dumps(report, indent=1, sort_keys=True), encoding="utf-8")
     (out / "decision_lab.md").write_text(markdown(report), encoding="utf-8")
+    (out / "decision_llm.json").write_text(json.dumps(llm.recorded_summary(), indent=1, sort_keys=True), encoding="utf-8")
     total = sum(s["violations"] for s in report["consistency"]["summary"].values())
-    print(f"wrote results/decision_lab.md and results/decision_lab.json — {len(report['agreement']['rows'])} dilemmas, {total} consistency violations")
+    print(f"wrote results/decision_lab.md, decision_lab.json and decision_llm.json — {len(report['agreement']['rows'])} dilemmas, {total} consistency violations")
 
 
 if __name__ == "__main__":
