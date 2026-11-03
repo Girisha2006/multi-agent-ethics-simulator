@@ -72,6 +72,11 @@ def index():
     return FileResponse(STATIC / "index.html")
 
 
+@app.get("/decision")
+def decision_page():
+    return FileResponse(STATIC / "decision.html")
+
+
 @app.get("/api/catalog")
 def catalog():
     return {"scenarios": SCENARIOS, "frameworks": FRAMEWORKS, "actions": ACTIONS, "version": VERSION}
