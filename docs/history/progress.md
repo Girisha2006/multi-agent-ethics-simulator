@@ -1,5 +1,8 @@
 # Implementation record
 
+> Historical record, kept as written. Paths and environment names (for example `gpu_env`) describe the setup at the time.
+> Current docs: [README](../../README.md).
+
 ## 27 September 2026
 
 Implemented the first working **Before You Decide** reference simulator in `gpu_env`.
@@ -50,3 +53,21 @@ Live testing found rate limits for Qwen and Gemma, malformed Lightning output, a
 Validation: 68 tests pass, including masked prompts, cache/repeat separation, stale evidence, paid opt-in, provider errors, schema validation, Jev fixtures, secret filtering, local rate guards, and absolute timeouts. The headed browser workflow passed model selection, explicit retries, escaped untrusted output, historical results, replay isolation, and mobile layout using labeled fixtures with no inference quota use.
 
 OPENROUTER.md documents configuration, model IDs, quota constraints, sources, protocols, and live-test limitations. README.md, PLAN.md, and PRESENTATION.md distinguish the optional model comparisons from the deterministic reference benchmark.
+
+## 3 November 2026 — Decision Lab
+
+Implemented the proposal's four decision-theory agents as a second lab, following the teacher's feedback on controlled
+variation and explanation evaluation.
+
+- 8 Moral Machine-style base dilemmas and 91 one-feature variants (99 dilemmas), with the one-feature property tested.
+- Expected utility, Sen-inspired welfare, Simon's satisficing and prospect theory agents with fixed, documented parameters
+  and explanations generated from their own traces.
+- Evaluation: invariance violations, counterfactual influential factors, a five-item explanation audit, Moral Machine
+  directions in both lane positions, and agreement. `make evaluate` writes `results/decision_lab.md`.
+- `/decision` page with dilemma, evaluation and LLM tabs.
+- Optional free OpenRouter agents: one batched request per dilemma, attempts counted in SQLite before sending, cache,
+  cooldowns, account-wide failure handling, and replay of real recordings only.
+- Cross-platform `start.sh` / `start.ps1` with a local `.venv`; Makefile; documentation reorganised under `docs/`.
+
+Validation: 127 offline tests pass; the page was checked in a browser at desktop and 360 px widths with no console errors
+other than a missing favicon. No LLM recordings have been made yet.

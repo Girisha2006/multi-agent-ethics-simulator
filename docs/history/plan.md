@@ -1,5 +1,8 @@
 # Project Plan: Controlled Comparison of Ethical Frameworks
 
+> Historical record, kept as written. Paths and environment names (for example `gpu_env`) describe the setup at the time.
+> Current docs: [README](../../README.md).
+
 ## Project direction
 
 Build an interactive system in which independent agents apply different ethical frameworks to the same trolley-style dilemma and explain their decisions.
@@ -305,7 +308,7 @@ The novelty candidate is framework-dependent information seeking under a questio
 
 The practical novelty candidate is this integrated teaching workflow and its authored diagnostic cases. The algorithms used inside it are established methods. First-of-its-kind novelty, improved learning, and generalization have **not** been established.
 
-The working prototype is version 0.2.0. Use [PRESENTATION.md](PRESENTATION.md) for a six-minute walkthrough, measured results, and answers to likely professor questions.
+The working prototype is version 0.2.0. Use [PRESENTATION.md](presentation-before-you-decide.md) for a six-minute walkthrough, measured results, and answers to likely professor questions.
 
 ### N1. Value-sensitive inquiry under an information budget
 
@@ -377,4 +380,4 @@ The current model evidence is preliminary. Live checks also produced rate limits
 
 N1–N3 remain the named contribution areas. The model layer lets us begin testing them against independent outputs; it does not make the planning algorithm new or establish general educational benefit.
 
-See [OPENROUTER.md](OPENROUTER.md) for exact IDs, source links, protocol details, configuration, and the live validation record.
+See [OPENROUTER.md](../llm-agents.md) for exact IDs, source links, protocol details, configuration, and the live validation record.

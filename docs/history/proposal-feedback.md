@@ -1,3 +1,8 @@
+# Proposal summary and teacher feedback
+
+> Historical record, kept as written. Paths and environment names (for example `gpu_env`) describe the setup at the time.
+> Current docs: [README](../../README.md).
+
 Project desc :
 An interactive system where several agents, each using a different classical decision theory model, face the same trolley style ethical dilemma at the same time. Each agent makes a decision and explains its reasoning, so we can compare how different frameworks reason under the same conditions.
 

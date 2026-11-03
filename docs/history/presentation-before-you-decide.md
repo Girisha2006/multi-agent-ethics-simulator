@@ -1,5 +1,8 @@
 # Before You Decide: professor demonstration
 
+> Historical record, kept as written. Paths and environment names (for example `gpu_env`) describe the setup at the time.
+> Current docs: [README](../../README.md).
+
 ## The project in one sentence
 
 We built an interactive experiment that shows how an ethical rule changes which evidence is worth collecting, and whether a disagreement can be resolved by learning more.
@@ -89,7 +92,7 @@ The small state space lets a viewer inspect every possibility and check the resu
 3. A counterbalanced comparison of this workflow against a static decision display, measuring explanation accuracy and task time.
 4. Broader evaluation of the implemented model adapter, with held-out cases, repeated runs, and failures recorded separately.
 
-Prior-work notes and scope are maintained in [PLAN.md](PLAN.md), Sections 10–12. The boundary-search and explanation-faithfulness ideas in Section 10 remain proposed extensions.
+Prior-work notes and scope are maintained in [PLAN.md](plan.md), Sections 10–12. The boundary-search and explanation-faithfulness ideas in Section 10 remain proposed extensions.
 
 ## Optional independent-model demonstration
 
@@ -99,4 +102,4 @@ A successful live smoke test returned a conditional decision, requested Relay A,
 
 Show the supplied-evidence/provenance panel, response time, and reference check. A mismatch or provider error is part of the recorded result. Do not describe a checked decision as proof that the explanation is faithful or morally correct.
 
-Gemini and OpenAI currently have no verified free endpoint in the checked OpenRouter catalog. Jev is paid and produces typed choices without explanations. Exact options and live-test limitations are in [OPENROUTER.md](OPENROUTER.md).
+Gemini and OpenAI currently have no verified free endpoint in the checked OpenRouter catalog. Jev is paid and produces typed choices without explanations. Exact options and live-test limitations are in [OPENROUTER.md](../llm-agents.md).
