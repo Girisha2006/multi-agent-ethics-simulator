@@ -179,6 +179,7 @@ def test_quota_exhausted_falls_back_to_recording(env, monkeypatch):
     (env.tmp / "rec.json").write_text(json.dumps([recording()]))
     r = llm.run(D)
     assert r["source"] == "recording" and env.calls == []
+    assert r["fallback"]["code"] == "quota_exhausted"
 
 
 def test_all_models_failing_falls_back_to_recording(env):
@@ -186,6 +187,7 @@ def test_all_models_failing_falls_back_to_recording(env):
     env.behaviour["respond"] = raising("timeout")
     r = llm.run(D)
     assert r["source"] == "recording" and r["requests_used"] == 3 and r["model_id"] == "rec/model:free"
+    assert r["fallback"]["code"] == "timeout"
 
 
 def test_busy_lock(env):

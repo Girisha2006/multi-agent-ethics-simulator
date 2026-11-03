@@ -5,7 +5,7 @@ Quota strategy (about 50 requests/day, 20/minute, frequent 429s):
 - Every HTTP attempt (success or failure) is written to SQLite before the request is sent. The daily count
   (DECISION_LLM_DAILY_LIMIT, default 45, per UTC day) and the sliding 60 s window (15 attempts) are read from that table,
   so limits survive restarts and always sit below the provider's own.
-- Successful results are cached by sha256(PROMPT_VERSION, stay lane, swerve lane); a repeat click costs nothing
+- Successful results are cached by sha256(PROMPT_VERSION, agent parameters, stay lane, swerve lane); a repeat click costs nothing
   unless the caller asks for repeat=true.
 - Models are tried in order (recommended first), at most 3 per run, only when the live catalog lists them at zero price.
   A failing model gets a persisted cooldown (429 -> Retry-After or 60 s, unavailable/not free -> 600 s, other -> 120 s).
@@ -332,6 +332,8 @@ def run(dilemma_id, repeat=False):
     if not _busy.acquire(blocking=False):
         return error_result(dilemma_id, "busy", "Another language-model run is in progress. Wait for it to finish.", 10)
     try:
+        if not repeat and (hit := stored(key)):  # another run may have finished while we waited for the cache check
+            return hit[0]
         started, error, used, result = time.perf_counter(), None, 0, None
         if not openrouter.api_key():
             error = {"code": "missing_key", "message": "No OpenRouter key is configured on the server.", "retry_after": None}
@@ -344,7 +346,7 @@ def run(dilemma_id, repeat=False):
             return result
         if error["code"] != "minute_limit":
             if recorded := find_recording(key):
-                return {**recorded, "source": "recording", "requests_used": used}
+                return {**recorded, "source": "recording", "requests_used": used, "fallback": {"code": error["code"], "message": error["message"]}}
         return error_result(dilemma_id, error["code"], error["message"], error["retry_after"], used, round((time.perf_counter() - started) * 1000) if used else None)
     finally:
         _busy.release()

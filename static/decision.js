@@ -17,7 +17,7 @@ let llmStatus = null;
 let llmResults = null;
 let llmMessage = '';
 let llmRunning = false;
-let llmLastError = null;
+let llmLast = null;
 let llmLoaded = false;
 let llmRepeat = false;
 const detailCache = {};
@@ -168,7 +168,8 @@ const loadReport = async () => {
 };
 
 /* ---- LLM agents ---- */
-const sourceLabel = (r) => (r.source === 'cache' ? 'Cached' : r.source === 'recording' ? `Recorded on ${new Date(r.created_at).toLocaleDateString()}` : r.source === 'live' ? 'Live' : 'No source');
+const sourceLabel = (r) => (r.source === 'cache' ? 'Saved run' : r.source === 'recording' ? `Recorded on ${new Date(r.created_at).toLocaleDateString()}` : r.source === 'live' ? 'Live' : 'No source');
+const spentHtml = (r) => (r === llmLast && r.requests_used != null ? `<span>${num(r.requests_used)} request${r.requests_used === 1 ? '' : 's'} used</span>` : '');
 const num = (n) => (Number.isFinite(n) ? n : 0);
 const runBlocker = () => {
   if (!llmStatus) return 'LLM status is not available.';
@@ -187,11 +188,11 @@ const statusHtml = () => {
     <div class="dl-stat">Daily quota<strong>${num(q.used)} / ${num(q.limit)}</strong>${num(q.remaining)} remaining</div>
     <div class="dl-stat">This minute<strong>${num(s.minute?.used)} / ${num(s.minute?.limit)}</strong></div>
     <div class="dl-stat">Recordings<strong>${num(s.recordings)}</strong></div>
-    <div class="dl-stat">Cooldowns<strong>${cooldowns.length}</strong>${cooldowns.map(([m, until]) => `${escapeHtml(m)} until ${escapeHtml(until)}`).join('<br>')}</div></div>
+    <div class="dl-stat">Cooldowns<strong>${cooldowns.length}</strong>${cooldowns.map(([m, until]) => `${escapeHtml(m)} until ${escapeHtml(new Date(until).toLocaleTimeString())}`).join('<br>')}</div></div>
     <div class="dl-meter ${q.remaining <= 0 ? 'full' : ''}" role="meter" aria-label="Daily quota used" aria-valuemin="0" aria-valuemax="${num(q.limit)}" aria-valuenow="${num(q.used)}"><span style="width:${pct}%"></span></div>`;
 };
 const resultHtml = (r) => {
-  const meta = `<div class="dl-result-meta">${r.status === 'ok' ? `<span class="dl-badge teal">${escapeHtml(sourceLabel(r))}</span>` : ''}${r.model_id ? `<span>${escapeHtml(r.model_id)}</span>` : ''}${r.duration_ms != null ? `<span>${num(r.duration_ms)} ms</span>` : ''}<span>${new Date(r.created_at).toLocaleString()}</span></div>`;
+  const meta = `<div class="dl-result-meta">${r.status === 'ok' ? `<span class="dl-badge teal">${escapeHtml(sourceLabel(r))}</span>` : ''}${r.model_id ? `<span>${escapeHtml(r.model_id)}</span>` : ''}${r.duration_ms != null ? `<span>${num(r.duration_ms)} ms</span>` : ''}${spentHtml(r)}<span>${new Date(r.created_at).toLocaleString()}</span></div>${r.fallback ? `<div class="dl-alert">Live run failed (${escapeHtml(r.fallback.message)}), so a recording is shown instead.</div>` : ''}`;
   if (r.status !== 'ok') {
     const e = r.error || {};
     return `<div class="dl-card dl-result">${meta}<div class="dl-alert">${escapeHtml(e.message || 'The run failed.')}${e.retry_after != null ? ` Try again in ${num(e.retry_after)} s.` : ''}</div></div>`;
@@ -204,12 +205,14 @@ const resultHtml = (r) => {
 const renderLlm = () => {
   const d = byId(selectedId);
   const blocker = runBlocker();
+  const last = llmLast && llmLast.dilemma_id === selectedId ? llmLast : null;
+  const rest = (llmResults || []).filter((r) => !(last && r.created_at === last.created_at && r.model_id === last.model_id));
   $('dl-llm').innerHTML = `<section class="dl-section"><h2>LLM service</h2>${statusHtml()}
     <p class="dl-note">Free OpenRouter models allow roughly 50 requests per day and 20 per minute. One run is one request for all four agents.</p></section>
     <section class="dl-section"><h2>Run on the selected dilemma</h2><p>${escapeHtml(d?.title || '')}${d?.base ? ` <span class="dl-badge teal">${escapeHtml(d.change)}</span>` : ''}</p>
     <div class="dl-run"><button class="button dl-run-btn" id="dl-run" ${blocker ? 'disabled' : ''}>Run LLM agents on this dilemma</button><label><input type="checkbox" id="dl-repeat" ${llmRepeat ? 'checked' : ''}> Repeat (uses quota)</label></div>
     <div class="dl-why" id="dl-why" aria-live="polite">${escapeHtml(blocker && !llmRunning ? blocker : llmRunning ? 'Running…' : '')}${llmMessage && llmStatus ? ` ${escapeHtml(llmMessage)}` : ''}</div></section>
-    <section class="dl-section"><h2>Results</h2>${llmLastError && llmLastError.dilemma_id === selectedId ? resultHtml(llmLastError) : ''}${llmResults === null ? '<p class="muted">No results loaded.</p>' : llmResults.length ? llmResults.map(resultHtml).join('') : '<p class="muted">No LLM results yet for this dilemma.</p>'}</section>`;
+    <section class="dl-section"><h2>Results</h2>${last ? resultHtml(last) : ''}${llmResults === null ? '<p class="muted">No results loaded.</p>' : rest.length ? rest.map(resultHtml).join('') : last ? '' : '<p class="muted">No LLM results yet for this dilemma.</p>'}</section>`;
 };
 const refreshResults = async () => {
   const id = selectedId;
@@ -236,9 +239,9 @@ const runLlm = async () => {
   renderLlm();
   try {
     const result = await api('/api/decision/llm/run', 'POST', {dilemma_id: selectedId, repeat});
-    llmLastError = result.status === 'error' && result.dilemma_id === selectedId ? result : null;
+    llmLast = result.dilemma_id === selectedId ? result : null;
   } catch { llmMessage = UNAVAILABLE; }
-  llmRunning = false;
+  llmRunning = false; llmRepeat = false;
   try { llmStatus = await api('/api/decision/llm/status'); } catch { llmStatus = null; llmMessage = UNAVAILABLE; }
   await refreshResults();
   $('dl-run')?.focus();
